@@ -1,0 +1,5 @@
+{
+  "name": "Yusuf Adi Pratama - Optimization Report 10",
+  "description": "An application for retail employees to generate a report of paid but not yet exported Sales Orders. Upload an Excel file, and the app will filter and display the orders that need to be processed based on specific 'Type of export request' values.",
+  "requestFramePermissions": []
+}

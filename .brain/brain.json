@@ -1,0 +1,142 @@
+{
+    "meta": {
+        "schema_version": "1.1.0",
+        "awf_version": "3.3.0"
+    },
+    "project": {
+        "name": "yusuf-adi-pratama---optimization-report-10",
+        "type": "Electron Desktop App",
+        "status": "In Development"
+    },
+    "tech_stack": {
+        "frontend": {
+            "framework": "React 19",
+            "bundler": "Vite",
+            "language": "TypeScript"
+        },
+        "backend": {
+            "framework": "Electron (Main Process)",
+            "runtime": "Node.js"
+        },
+        "database": {
+            "type": "Local File System / Excel Files",
+            "orm": "None (xlsx-js-style)"
+        }
+    },
+    "database_schema": {
+        "summary": "Application relies on importing Excel files for reporting data. No persistent SQL database.",
+        "tables": [
+            {
+                "name": "SaleOrder",
+                "columns": [
+                    "orderCode",
+                    "customerName",
+                    "createdDate",
+                    "deliveryDate",
+                    "outputStore",
+                    "totalAmount"
+                ]
+            },
+            {
+                "name": "TransferGoodsData",
+                "columns": [
+                    "transportVoucher",
+                    "outputStore",
+                    "inputStore",
+                    "transferStoreDate",
+                    "inventoryStatus"
+                ]
+            },
+            {
+                "name": "DepositToolsData",
+                "columns": [
+                    "store",
+                    "inOutVoucher",
+                    "customerName",
+                    "date",
+                    "paymentAmount"
+                ]
+            },
+            {
+                "name": "FifoMistakeRow",
+                "columns": [
+                    "storeName",
+                    "am",
+                    "phoneSaleOut",
+                    "phoneMistake",
+                    "phonePercent",
+                    "tablet...",
+                    "tv...",
+                    "speaker..."
+                ]
+            },
+            {
+                "name": "StaffMistakeResumeRow",
+                "columns": [
+                    "no",
+                    "am",
+                    "storeName",
+                    "staffName",
+                    "phone",
+                    "tablet",
+                    "tv",
+                    "speaker",
+                    "total"
+                ]
+            },
+            {
+                "name": "IncentiveStaffRow",
+                "columns": [
+                    "staff",
+                    "total",
+                    "products..."
+                ]
+            }
+        ]
+    },
+    "api_endpoints": [
+        {
+            "path": "Local File Processing",
+            "explained": "Parses uploaded Excel files using services/excelService.ts"
+        }
+    ],
+    "features": [
+        {
+            "name": "FIFO Mistake Report",
+            "status": "Active",
+            "description": "Analyzes FIFO violations for Phone, Tablet, TV, Speaker categories based on Excel inputs (Sales vs Validations)."
+        },
+        {
+            "name": "Staff FIFO Mistake Report",
+            "status": "Active",
+            "description": "Detailed breakdown of FIFO mistakes by individual staff members."
+        },
+        {
+            "name": "Deposit Tools Report",
+            "status": "Active",
+            "description": "Tracks deposit tools usage/payments."
+        },
+        {
+            "name": "Transfer Goods Report",
+            "status": "Active",
+            "description": "Tracks goods transferred between stores."
+        },
+        {
+            "name": "Revenue & Incentive",
+            "status": "In Progress",
+            "description": "Calculates staff revenue and incentives based on sales data."
+        }
+    ],
+    "knowledge_items": {
+        "gotchas": [
+            {
+                "issue": "Excel Parsing",
+                "solution": "Uses xlsx-js-style. Large files (>60MB) require 'dense: true' in read options to avoid memory issues."
+            },
+            {
+                "issue": "Store/AM Mapping",
+                "solution": "Relies on an 'AM Data' Excel file to map Store Codes/Names to Area Managers and Grand Opening (G.O.) dates."
+            }
+        ]
+    }
+}
