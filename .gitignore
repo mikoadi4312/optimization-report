@@ -29,3 +29,5 @@ dist-ssr
 *.zip
 codebase_full.txt
 AI_STUDIO_CONTEXT.md
+
+dist_electron/

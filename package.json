@@ -10,7 +10,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "electron:dev": "concurrently \"vite\" \"wait-on tcp:5173 && electron .\"",
-    "electron:build": "vite build && electron-builder"
+    "electron:build": "vite build && electron-builder",
+    "deploy": "git add . && git commit -m \"Update\" && git push"
   },
   "build": {
     "appId": "com.example.optimizationreport",

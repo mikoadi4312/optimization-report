@@ -16,6 +16,7 @@ interface VirtualTableProps<T> {
     estimateSize?: number;
     overscan?: number;
     customHeader?: React.ReactNode;
+    headerClassName?: string;
 }
 
 function VirtualTable<T extends Record<string, any>>({
@@ -25,6 +26,7 @@ function VirtualTable<T extends Record<string, any>>({
     estimateSize = 50,
     overscan = 10,
     customHeader,
+    headerClassName,
 }: VirtualTableProps<T>) {
     const parentRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +63,7 @@ function VirtualTable<T extends Record<string, any>>({
                     {customHeader ? (
                         customHeader
                     ) : (
-                        <div className="flex bg-gradient-to-r from-blue-600 to-blue-700" style={{ minWidth: 'fit-content' }}>
+                        <div className={`flex ${headerClassName || 'bg-gradient-to-r from-blue-600 to-blue-700'}`} style={{ minWidth: 'fit-content' }}>
                             {columns.map((column, index) => (
                                 <div
                                     key={index}
@@ -101,7 +103,7 @@ function VirtualTable<T extends Record<string, any>>({
                 {customHeader ? (
                     customHeader
                 ) : (
-                    <div className="flex bg-gradient-to-r from-blue-600 to-blue-700">
+                    <div className={`flex ${headerClassName || 'bg-gradient-to-r from-blue-600 to-blue-700'}`}>
                         {columns.map((column, index) => (
                             <div
                                 key={index}
