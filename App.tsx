@@ -1021,49 +1021,7 @@ const App: React.FC = () => {
     }
   };
 
-  const getReportTitle = () => {
-    if (reportType === 'INCENTIVE_STAFF') {
-      return incentiveSubType === 'STANDARD'
-        ? t('reports.incentiveStaff.title')
-        : t('reports.incentiveStaffBolltech.title');
-    }
-    if (reportType === 'FIFO') {
-      return fifoSubType === 'STORE'
-        ? t('reports.fifo.title')
-        : t('reports.staffFifoMistake.title');
-    }
-    const mapping: Record<ReportType, string> = {
-      SO_NOT_EXPORT: t('reports.soNotExport.title'),
-      TRANSFER_GOODS: t('reports.transferGoods.title'),
-      DEPOSIT_TOOLS: t('reports.depositTools.title'),
-      FIFO: '', // Handled above
-      REVENUE_STAFF: t('reports.revenueStaff.title'),
-      INCENTIVE_STAFF: '', // Handled above
-    };
-    return mapping[reportType];
-  };
 
-  const getReportDescription = () => {
-    if (reportType === 'INCENTIVE_STAFF') {
-      return incentiveSubType === 'STANDARD'
-        ? t('reports.incentiveStaff.description')
-        : t('reports.incentiveStaffBolltech.description');
-    }
-    if (reportType === 'FIFO') {
-      return fifoSubType === 'STORE'
-        ? t('reports.fifo.description')
-        : t('reports.staffFifoMistake.description');
-    }
-    const mapping: Record<ReportType, string> = {
-      SO_NOT_EXPORT: t('reports.soNotExport.description'),
-      TRANSFER_GOODS: t('reports.transferGoods.description'),
-      DEPOSIT_TOOLS: t('reports.depositTools.description'),
-      FIFO: '', // Handled above
-      REVENUE_STAFF: t('reports.revenueStaff.description'),
-      INCENTIVE_STAFF: '', // Handled above
-    };
-    return mapping[reportType];
-  };
 
   const getHeaderTitle = () => {
     if (!isLimitedView) return 'Optimization Report';
@@ -1097,8 +1055,7 @@ const App: React.FC = () => {
               <InstructionCard reportType={reportType} fifoSubType={fifoSubType} />
             </div>
             <div className="lg:col-span-2">
-              <h2 className="text-2xl font-bold text-slate-700 mb-2">{getReportTitle()}</h2>
-              <p className="text-slate-600 mb-6">{getReportDescription()}</p>
+
               <div className="bg-white rounded-xl shadow-lg p-6 min-h-[400px] flex flex-col border border-slate-100">
                 {isLoading || isProcessing ? (
                   <div className="flex-grow flex items-center justify-center">

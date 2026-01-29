@@ -31,8 +31,7 @@ const MTDSummaryTable: React.FC<{ summary: FifoWeeklySummary }> = ({ summary }) 
 
     return (
         <div>
-            <h4 className="text-center text-md font-bold bg-blue-800 text-white p-2 rounded-t-lg uppercase">{summary.title}</h4>
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-b-lg">
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
                 <table className="min-w-full text-xs border-collapse">
                     <thead className="align-middle">
                         <tr>
@@ -115,7 +114,7 @@ const ResumeCard: React.FC<ResumeCardProps> = ({ title, totalLabel, totalValue, 
 
     return (
         <div className="bg-white rounded-lg shadow ring-1 ring-black ring-opacity-5 overflow-hidden">
-            {!isLimitedView && <h4 className="text-center text-sm font-bold bg-yellow-400 p-1 uppercase">{title}</h4>}
+
             <table className="w-full text-sm border-collapse">
                 <thead className="bg-yellow-400 font-bold">
                     <tr>

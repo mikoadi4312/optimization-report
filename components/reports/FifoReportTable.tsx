@@ -32,8 +32,8 @@ const SummaryTable: React.FC<{ summary: FifoWeeklySummary }> = ({ summary }) => 
 
     return (
         <div>
-            <h4 className="text-center text-md font-bold bg-blue-800 text-white p-2 rounded-t-lg uppercase">{summary.title}</h4>
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-b-lg">
+
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
                 <table className="min-w-full text-xs border-collapse">
                     <thead className="align-middle">
                         <tr>
@@ -786,8 +786,7 @@ const FifoReportTable: React.FC<FifoReportTableProps> = ({ orders, fifoSummaries
                     <div className="inline-block min-w-full py-2 align-middle px-6">
                         <div className="flex items-start space-x-8">
                             <div className="flex-shrink-0">
-                                <h2 className="text-center text-lg font-bold bg-blue-800 text-white p-2 rounded-t-lg uppercase">{title}</h2>
-                                <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-b-lg">
+                                <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
                                     <table className="min-w-full border-collapse">
                                         <thead className="align-middle text-sm">
                                             <tr>
