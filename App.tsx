@@ -907,45 +907,67 @@ const App: React.FC = () => {
     }
   };
 
+  const renderSubTypeSelectors = () => {
+    if (reportType === 'FIFO') {
+      return (
+        <div className="bg-slate-200 p-1 rounded-lg inline-flex flex-wrap gap-1 mb-6">
+          <button
+            onClick={() => handleFifoSubTypeChange('STORE')}
+            className={`text-center px-4 py-2 font-semibold text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-200 focus:ring-blue-500 ${fifoSubType === 'STORE' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
+          >
+            {t('app.buttons.storeFifoMistake')}
+          </button>
+          <button
+            onClick={() => handleFifoSubTypeChange('STAFF')}
+            className={`text-center px-4 py-2 font-semibold text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-200 focus:ring-blue-500 ${fifoSubType === 'STAFF' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
+          >
+            {t('app.buttons.staffFifoMistake')}
+          </button>
+        </div>
+      );
+    }
+    if (reportType === 'INCENTIVE_STAFF') {
+      return (
+        <div className="bg-slate-200 p-1 rounded-lg inline-flex flex-wrap gap-1 mb-6">
+          <button
+            onClick={() => handleIncentiveSubTypeChange('STANDARD')}
+            className={`text-center px-4 py-2 font-semibold text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-200 focus:ring-blue-500 ${incentiveSubType === 'STANDARD' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
+          >
+            {t('app.buttons.incentiveStaffStandard')}
+          </button>
+          <button
+            onClick={() => handleIncentiveSubTypeChange('BOLLTECH')}
+            className={`text-center px-4 py-2 font-semibold text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-200 focus:ring-blue-500 ${incentiveSubType === 'BOLLTECH' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
+          >
+            {t('app.buttons.incentiveStaffBolltech')}
+          </button>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const renderFileUpload = () => {
     switch (reportType) {
       case 'FIFO':
-        return (
-          <div className="space-y-4">
-            <div className="bg-slate-200 p-1 rounded-lg inline-flex flex-wrap gap-1">
-              <button
-                onClick={() => handleFifoSubTypeChange('STORE')}
-                className={`text-center px-4 py-2 font-semibold text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-200 focus:ring-blue-500 ${fifoSubType === 'STORE' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
-              >
-                {t('app.buttons.storeFifoMistake')}
-              </button>
-              <button
-                onClick={() => handleFifoSubTypeChange('STAFF')}
-                className={`text-center px-4 py-2 font-semibold text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-200 focus:ring-blue-500 ${fifoSubType === 'STAFF' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
-              >
-                {t('app.buttons.staffFifoMistake')}
-              </button>
-            </div>
-            {fifoSubType === 'STORE' ? (
-              <MultiFileUpload
-                onFilesProcess={handleFifoFilesProcess}
-                isLoading={isProcessing}
-                statuses={fifoFileStatuses}
-                fileConfig={fifoFileConfig}
-                title={t('fileUpload.fifo.title')}
-                description={t('fileUpload.fifo.description')}
-              />
-            ) : (
-              <MultiFileUpload
-                onFilesProcess={handleStaffFifoFilesProcess}
-                isLoading={isProcessing}
-                statuses={staffFifoFileStatuses}
-                fileConfig={staffFifoFileConfig}
-                title={t('fileUpload.staffFifo.title')}
-                description={t('fileUpload.staffFifo.description')}
-              />
-            )}
-          </div>
+        return fifoSubType === 'STORE' ? (
+          <MultiFileUpload
+            onFilesProcess={handleFifoFilesProcess}
+            isLoading={isProcessing}
+            statuses={fifoFileStatuses}
+            fileConfig={fifoFileConfig}
+            title={t('fileUpload.fifo.title')}
+            description={t('fileUpload.fifo.description')}
+          />
+        ) : (
+          <MultiFileUpload
+            onFilesProcess={handleStaffFifoFilesProcess}
+            isLoading={isProcessing}
+            statuses={staffFifoFileStatuses}
+            fileConfig={staffFifoFileConfig}
+            title={t('fileUpload.staffFifo.title')}
+            description={t('fileUpload.staffFifo.description')}
+          />
         );
       case 'TRANSFER_GOODS':
         return <MultiFileUpload
@@ -975,42 +997,24 @@ const App: React.FC = () => {
           description={t('fileUpload.revenueStaff.description')}
         />;
       case 'INCENTIVE_STAFF':
-        return (
-          <div className="space-y-4">
-            <div className="bg-slate-200 p-1 rounded-lg inline-flex flex-wrap gap-1">
-              <button
-                onClick={() => handleIncentiveSubTypeChange('STANDARD')}
-                className={`text-center px-4 py-2 font-semibold text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-200 focus:ring-blue-500 ${incentiveSubType === 'STANDARD' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
-              >
-                {t('app.buttons.incentiveStaffStandard')}
-              </button>
-              <button
-                onClick={() => handleIncentiveSubTypeChange('BOLLTECH')}
-                className={`text-center px-4 py-2 font-semibold text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-200 focus:ring-blue-500 ${incentiveSubType === 'BOLLTECH' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`}
-              >
-                {t('app.buttons.incentiveStaffBolltech')}
-              </button>
-            </div>
-            {incentiveSubType === 'STANDARD' ? (
-              <MultiFileUpload
-                onFilesProcess={handleIsFilesProcess}
-                isLoading={isProcessing}
-                statuses={isFileStatuses}
-                fileConfig={isFileConfig}
-                title={t('fileUpload.incentiveStaff.title')}
-                description={t('fileUpload.incentiveStaff.description')}
-              />
-            ) : (
-              <MultiFileUpload
-                onFilesProcess={handleIsbFilesProcess}
-                isLoading={isProcessing}
-                statuses={isFileBolltechStatuses}
-                fileConfig={isbFileConfig}
-                title={t('fileUpload.incentiveStaffBolltech.title')}
-                description={t('fileUpload.incentiveStaffBolltech.description')}
-              />
-            )}
-          </div>
+        return incentiveSubType === 'STANDARD' ? (
+          <MultiFileUpload
+            onFilesProcess={handleIsFilesProcess}
+            isLoading={isProcessing}
+            statuses={isFileStatuses}
+            fileConfig={isFileConfig}
+            title={t('fileUpload.incentiveStaff.title')}
+            description={t('fileUpload.incentiveStaff.description')}
+          />
+        ) : (
+          <MultiFileUpload
+            onFilesProcess={handleIsbFilesProcess}
+            isLoading={isProcessing}
+            statuses={isFileBolltechStatuses}
+            fileConfig={isbFileConfig}
+            title={t('fileUpload.incentiveStaffBolltech.title')}
+            description={t('fileUpload.incentiveStaffBolltech.description')}
+          />
         );
       case 'SO_NOT_EXPORT':
       default:
@@ -1020,8 +1024,6 @@ const App: React.FC = () => {
         </div>;
     }
   };
-
-
 
   const getHeaderTitle = () => {
     if (!isLimitedView) return 'Optimization Report';
@@ -1044,10 +1046,7 @@ const App: React.FC = () => {
         <Header title={getHeaderTitle()} />
         <div className="p-8 flex-1 overflow-y-auto">
 
-          {/* <div className="mb-8">
-            <h2 className="text-3xl font-bold text-slate-800">{t('app.selectReportTitle')}</h2>
-            <p className="mt-2 text-slate-600">{t('app.selectReportDescription')}</p>
-          </div> */}
+          {renderSubTypeSelectors()}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
