@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeReport, onSelectReport, isLimit
                 <p className="text-xs text-slate-500 text-center">
                     {isLimitedView
                         ? (menuItems.find(item => item.type === activeReport)?.label || 'Report')
-                        : <>&copy; 2025 Optimization Report<br /><span className="text-[10px] text-emerald-400">v1.3 (Force Update)</span></>
+                        : <>&copy; 2025 Optimization Report</>
                     }
                 </p>
             </div>

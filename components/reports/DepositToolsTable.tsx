@@ -202,7 +202,7 @@ const DepositToolsTable: React.FC<DepositToolsTableProps> = ({ orders, fileName 
         columns={columns}
         estimateSize={50}
         overscan={10}
-        headerClassName="bg-gradient-to-r from-emerald-600 to-teal-700"
+        headerClassName="bg-blue-600"
       />
     </div>
   );
