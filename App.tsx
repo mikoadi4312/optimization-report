@@ -1086,10 +1086,10 @@ const App: React.FC = () => {
         <Header title={getHeaderTitle()} />
         <div className="p-8 flex-1 overflow-y-auto">
 
-          <div className="mb-8">
+          {/* <div className="mb-8">
             <h2 className="text-3xl font-bold text-slate-800">{t('app.selectReportTitle')}</h2>
             <p className="mt-2 text-slate-600">{t('app.selectReportDescription')}</p>
-          </div>
+          </div> */}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
