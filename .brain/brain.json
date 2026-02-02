@@ -54,7 +54,8 @@
                     "inOutVoucher",
                     "customerName",
                     "date",
-                    "paymentAmount"
+                    "paymentAmount",
+                    "voucherReference"
                 ]
             },
             {
@@ -114,7 +115,7 @@
         {
             "name": "Deposit Tools Report",
             "status": "Active",
-            "description": "Tracks deposit tools usage/payments."
+            "description": "Tracks deposit tools usage/payments. Includes 'Voucher Concert' logic to exclude paired Refund/Deposit transactions."
         },
         {
             "name": "Transfer Goods Report",
@@ -136,6 +137,10 @@
             {
                 "issue": "Store/AM Mapping",
                 "solution": "Relies on an 'AM Data' Excel file to map Store Codes/Names to Area Managers and Grand Opening (G.O.) dates."
+            },
+            {
+                "issue": "Deposit Tools Pairing",
+                "solution": "Transactions with 'Voucher Concert' pairing (Refund referencing Deposit) are automatically excluded. Duplicates only keep the latest entry."
             }
         ]
     }

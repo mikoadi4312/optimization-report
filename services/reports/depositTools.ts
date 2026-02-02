@@ -21,6 +21,7 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
         content: findHeader(['Content']),
         voucherType: findHeader(['Voucher type']),
         paymentAmount: findHeader(['Payment amount']),
+        voucherReference: findHeader(['Voucher concert', 'Voucher concern', 'Voucher connect', 'Referrence']),
     };
 
     const requiredHeaders: { [key: string]: string } = {
@@ -56,9 +57,11 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
         dateValue: any;
         voucherType: string;
         checkDay: number;
+        inOutVoucher: string;
+        voucherReference: string;
     }
 
-    const transactions: Transaction[] = [];
+    let allTransactions: Transaction[] = [];
 
     dataRows.forEach(row => {
         const customerName = String(row[headerIndices.customerName] || '').trim();
@@ -71,19 +74,68 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
         const date = parseUnknownDateFormat(dateValue);
         const checkDay = date ? Math.floor((today.getTime() - date.getTime()) / (1000 * 3600 * 24)) : 0;
         const voucherType = String(row[headerIndices.voucherType] || '').trim();
+        const inOutVoucher = String(row[headerIndices.inOutVoucher] || '').trim();
+        const voucherReference = headerIndices.voucherReference !== -1 ? String(row[headerIndices.voucherReference] || '').trim() : '';
 
-        transactions.push({
+        allTransactions.push({
             row,
             customerName,
             amount,
             date,
             dateValue,
             voucherType,
-            checkDay
+            checkDay,
+            inOutVoucher,
+            voucherReference
         });
     });
 
-    // 2. Group by Customer
+    // 2. Identify Paired/Refunded Transactions (The "Yellow" Rows Logic)
+    // Rule: If a 'Refund' transaction references a 'Deposit' transaction via 'voucherReference', BOTH are excluded.
+    const refundedVoucherIds = new Set<string>();
+
+    // Pass 1: Collect IDs found in 'voucherReference' of Refund transactions
+    allTransactions.forEach(tx => {
+        // Check for Refund type or negative amount with a reference
+        const isRefund = tx.amount < 0 || tx.voucherType.toLowerCase().includes('refund');
+        if (isRefund && tx.voucherReference) {
+            refundedVoucherIds.add(tx.voucherReference);
+        }
+    });
+
+    // Pass 2: Filter the list
+    const transactions: Transaction[] = [];
+
+    // We also need to remove the Refund transactions that did the cancelling, 
+    // so they don't double-count as debt in FIFO logic (unless that's desired? 
+    // Usually if specifically refunded, both disappear).
+    // Let's track which Refunds were used to cancel specific items to exclude them too.
+    const usedRefundIds = new Set<string>();
+
+    allTransactions.forEach(tx => {
+        const isRefund = tx.amount < 0 || tx.voucherType.toLowerCase().includes('refund');
+
+        if (isRefund) {
+            // If this refund specifically references a known ID, we mark this refund as 'used' (excluded)
+            // because it served its purpose of cancelling a specific line.
+            if (tx.voucherReference && refundedVoucherIds.has(tx.voucherReference)) {
+                // But wait, refundedVoucherIds comes FROM voucherReference.
+                // So yes, this is a cancelling refund.
+                return; // Exclude this Refund Tx
+            }
+        } else {
+            // It's a Deposit (or positive)
+            // If this ID is in the refunded list, it's cancelled.
+            if (refundedVoucherIds.has(tx.inOutVoucher)) {
+                return; // Exclude this Deposit Tx
+            }
+        }
+
+        // If not paired, keep it for standard processing (FIFO, etc.)
+        transactions.push(tx);
+    });
+
+    // 3. Group by Customer
     const customerGroups = new Map<string, Transaction[]>();
     for (const tx of transactions) {
         if (!customerGroups.has(tx.customerName)) {
@@ -94,7 +146,7 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
 
     const resultRows: DepositToolsData[] = [];
 
-    // 3. Process FIFO
+    // 4. Process FIFO (for remaining items)
     for (const [customer, txs] of customerGroups) {
         // Sort by date (oldest first)
         txs.sort((a, b) => {
@@ -111,7 +163,7 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
                 // Deposit
                 depositQueue.push({ tx, remaining: tx.amount });
             } else if (tx.amount < 0) {
-                // Usage
+                // Usage (Generic usage that wasn't paired above)
                 let usage = Math.abs(tx.amount);
 
                 while (usage > 0.01 && depositQueue.length > 0) { // 0.01 tolerance for float
@@ -129,7 +181,7 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
             }
         }
 
-        // 4. Collect remaining deposits
+        // 5. Collect remaining deposits
         for (const item of depositQueue) {
             // Filter Criteria:
             // 1. Voucher Type must be 'Erablue - Collecting sales deposits'
@@ -146,14 +198,8 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
                 const storeCodeFromFile = String(row[headerIndices.store] || '').trim();
                 const storeCode = storeCodeFromFile.split(' ')[0]; // Extract just the code part
 
-                // DEBUG: Check AM data
-                console.log('DEBUG - Store code:', storeCode);
-                console.log('DEBUG - codeToName size:', amData.codeToName.size);
-                console.log('DEBUG - codeToName lookup:', amData.codeToName.get(storeCode));
-
                 // Get full store name from AM data, fallback to code if not found
                 const fullStoreName = amData.codeToName.get(storeCode) || storeCodeFromFile;
-                console.log('DEBUG - Final store name:', fullStoreName);
 
                 resultRows.push({
                     store: fullStoreName, // Now uses full store name from AM data
@@ -169,41 +215,44 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
         }
     }
 
-    // Post-process: Handle transactions appearing > 3 times
+    // Post-process: Deduplicate by In/Out Voucher
+    // Rule: If multiple rows have the same Voucher ID, keep only the LATEST one (smallest checkDay).
+    // The user specifically mentioned that for odd numbers of duplicates (e.g. 3), 
+    // we should show the latest one without modifying its date.
+    // "Even" counts are expected to cancel out in FIFO, but if they remain, we still show the latest.
+
+    const uniqueResults: DepositToolsData[] = [];
     const voucherGroups = new Map<string, DepositToolsData[]>();
+
+    // group by Voucher ID
     for (const row of resultRows) {
-        // Use inOutVoucher as the unique key. 
-        // If necessary, we could combine with store/customer, but Voucher ID should be unique enough.
         const key = row.inOutVoucher;
-        if (!key) continue; // Skip if no voucher ID
+        if (!key) {
+            // If no voucher ID (rare), keep it directly
+            uniqueResults.push(row);
+            continue;
+        }
         if (!voucherGroups.has(key)) voucherGroups.set(key, []);
         voucherGroups.get(key)!.push(row);
     }
 
+    // Select Latest per Group
     for (const [key, rows] of voucherGroups) {
-        if (rows.length > 3) {
-            // Find the latest transaction (smallest checkDay)
-            let minCheckDay = Infinity;
-            let newestDateStr = '';
+        if (rows.length === 1) {
+            uniqueResults.push(rows[0]);
+        } else {
+            // Sort by checkDay ASC (Smallest checkDay = Newest Date)
+            // Note: checkDay = (Today - Date), so smaller is newer.
+            rows.sort((a, b) => a.checkDay - b.checkDay);
 
-            for (const r of rows) {
-                if (r.checkDay < minCheckDay) {
-                    minCheckDay = r.checkDay;
-                    newestDateStr = r.date;
-                }
-            }
-
-            // Update all rows in this group to use the latest date
-            if (newestDateStr) {
-                for (const r of rows) {
-                    r.date = newestDateStr;
-                    r.checkDay = minCheckDay;
-                }
-            }
+            // Take the first one (Latest)
+            uniqueResults.push(rows[0]);
         }
     }
 
-    const sortedData = resultRows.sort((a, b) => b.checkDay - a.checkDay);
+    const finalProcessedRows = uniqueResults;
+
+    const sortedData = finalProcessedRows.sort((a, b) => b.checkDay - a.checkDay);
 
     return sortedData;
 }
