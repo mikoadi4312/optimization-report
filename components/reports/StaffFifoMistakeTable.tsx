@@ -27,19 +27,40 @@ const StaffFifoMistakeTable: React.FC<StaffFifoMistakeTableProps> = ({ orders, d
             const yellowHeaderStyle = { font: { bold: true, color: { rgb: "FF0000" } }, fill: { fgColor: { rgb: "FFFF00" } }, ...centerStyle, border: border };
             const subHeadStyle = { font: { bold: true }, fill: { fgColor: { rgb: "D9D9D9" } }, ...centerStyle, border: border };
 
-            // Title Logic: RESUME STAFF MISTAKE 1 - 20 JANUARI 2026
+            // Title Logic
             let title = `RESUME STAFF MISTAKE ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}`;
             if (dateRange?.min && dateRange?.max) {
-                const startDay = dateRange.min.getDate();
-                const endDay = dateRange.max.getDate();
-                const monthYear = dateRange.max.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase();
-                // Check if same month/year for cleaner format
-                if (dateRange.min.getMonth() === dateRange.max.getMonth() && dateRange.min.getFullYear() === dateRange.max.getFullYear()) {
-                    title = `RESUME STAFF MISTAKE ${startDay} - ${endDay} ${monthYear}`;
+                const min = dateRange.min;
+                let max = dateRange.max;
+
+                // FIX: If max date is the 1st of a month, roll back 1 day for display purposes (assuming inclusive range)
+                // e.g. Data ends "Feb 1 00:00" -> Show "Jan 31"
+                if (max.getDate() === 1) {
+                    max = new Date(max);
+                    max.setDate(max.getDate() - 1);
+                }
+
+                const startDay = min.getDate();
+                const endDay = max.getDate();
+                const startMonth = min.getMonth();
+                const endMonth = max.getMonth();
+                const startYear = min.getFullYear();
+                const endYear = max.getFullYear();
+
+                const endMonthName = max.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+                const endYearVal = max.getFullYear();
+
+                if (startMonth === endMonth && startYear === endYear) {
+                    // Same Month: 1 - 31 JANUARI 2026
+                    title = `RESUME STAFF MISTAKE ${startDay} - ${endDay} ${endMonthName} ${endYearVal}`;
                 } else {
-                    // Fallback for different months: 1 JANUARI - 5 FEBRUARI 2026
-                    const startFull = dateRange.min.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' }).toUpperCase();
-                    title = `RESUME STAFF MISTAKE ${startFull} - ${endDay} ${monthYear}`;
+                    // Different Month: 1 JANUARI - 5 FEBRUARI 2026
+                    const startMonthName = min.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+                    title = `RESUME STAFF MISTAKE ${startDay} ${startMonthName} ${startYear} - ${endDay} ${endMonthName} ${endYearVal}`;
+                    // Simplified if same year: 1 JANUARI - 5 FEBRUARI 2026
+                    if (startYear === endYear) {
+                        title = `RESUME STAFF MISTAKE ${startDay} ${startMonthName} - ${endDay} ${endMonthName} ${endYearVal}`;
+                    }
                 }
             }
 
@@ -160,6 +181,37 @@ const StaffFifoMistakeTable: React.FC<StaffFifoMistakeTableProps> = ({ orders, d
         }
     };
 
+    // Helper to get display Title for UI
+    const getDisplayTitle = () => {
+        if (dateRange?.min && dateRange?.max) {
+            const min = dateRange.min;
+            let max = dateRange.max;
+            // UI Logic: Rollback 1 day if 1st of month
+            if (max.getDate() === 1) {
+                const d = new Date(max);
+                d.setDate(d.getDate() - 1);
+                max = d;
+            }
+
+            const startDay = min.getDate();
+            const endDay = max.getDate();
+            const endMonthName = max.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+            const endYearVal = max.getFullYear();
+            const startMonthName = min.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+            const startYearVal = min.getFullYear();
+
+            if (min.getMonth() === max.getMonth() && min.getFullYear() === max.getFullYear()) {
+                return `RESUME STAFF MISTAKE ${startDay} - ${endDay} ${endMonthName} ${endYearVal}`;
+            } else {
+                if (startYearVal === endYearVal) {
+                    return `RESUME STAFF MISTAKE ${startDay} ${startMonthName} - ${endDay} ${endMonthName} ${endYearVal}`;
+                }
+                return `RESUME STAFF MISTAKE ${startDay} ${startMonthName} ${startYearVal} - ${endDay} ${endMonthName} ${endYearVal}`;
+            }
+        }
+        return `RESUME STAFF MISTAKE ${new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase()}`;
+    };
+
     return (
         <div className="w-full flex flex-col space-y-6">
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -188,16 +240,21 @@ const StaffFifoMistakeTable: React.FC<StaffFifoMistakeTableProps> = ({ orders, d
                         <table className="min-w-full border-collapse text-xs">
                             <thead>
                                 <tr>
-                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-[#2F5597] text-white">NO</th>
-                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-[#2F5597] text-white">AM</th>
-                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-[#2F5597] text-white">Store Name</th>
-                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-[#2F5597] text-white">Staff Name</th>
+                                    <th colSpan={22} className="p-2 text-center align-middle font-bold border border-slate-300 bg-blue-800 text-white uppercase text-base tracking-wide">
+                                        {getDisplayTitle()}
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-blue-800 text-white">NO</th>
+                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-blue-800 text-white">AM</th>
+                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-blue-800 text-white">Store Name</th>
+                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-blue-800 text-white">Staff Name</th>
                                     <th colSpan={4} className="p-2 text-center align-middle font-bold border border-slate-300 bg-yellow-400 text-red-600 uppercase">Phone</th>
                                     <th colSpan={4} className="p-2 text-center align-middle font-bold border border-slate-300 bg-yellow-400 text-red-600 uppercase">Tablet</th>
                                     <th colSpan={4} className="p-2 text-center align-middle font-bold border border-slate-300 bg-yellow-400 text-red-600 uppercase">TV</th>
                                     <th colSpan={4} className="p-2 text-center align-middle font-bold border border-slate-300 bg-yellow-400 text-red-600 uppercase">Speaker</th>
-                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-[#2F5597] text-white">Total</th>
-                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-[#2F5597] text-white">Status</th>
+                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-blue-800 text-white">Total</th>
+                                    <th rowSpan={2} className="p-2 text-center align-middle font-bold border border-slate-300 bg-blue-800 text-white">Status</th>
                                 </tr>
                                 <tr className="bg-slate-200 text-[9px]">
                                     {Array(4).fill(0).map((_, i) => (

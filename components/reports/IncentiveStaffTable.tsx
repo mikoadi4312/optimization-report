@@ -46,6 +46,7 @@ const IncentiveStaffTable: React.FC<IncentiveStaffTableProps> = ({ orders, fileN
       accessor: 'staff' as keyof IncentiveStaffRow,
       className: 'font-medium text-slate-900',
       headerClassName: 'bg-yellow-200',
+      width: 250,
     },
     ...productHeaders.map(productHeader => ({
       header: productHeader,
@@ -54,6 +55,7 @@ const IncentiveStaffTable: React.FC<IncentiveStaffTableProps> = ({ orders, fileN
       ),
       className: 'text-right',
       headerClassName: 'bg-blue-200',
+      width: 150,
     })),
     {
       header: t('reports.tableHeaders.incentiveStaff.total'),
@@ -62,6 +64,7 @@ const IncentiveStaffTable: React.FC<IncentiveStaffTableProps> = ({ orders, fileN
       ),
       className: 'text-right',
       headerClassName: 'bg-blue-200',
+      width: 200,
     },
   ], [productHeaders, t]);
 

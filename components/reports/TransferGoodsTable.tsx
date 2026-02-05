@@ -16,11 +16,11 @@ const AMSummaryTable: React.FC<{ summaryData: AMSummaryData[] }> = ({ summaryDat
   return (
     <div className="bg-white rounded-lg shadow ring-1 ring-black ring-opacity-5 overflow-hidden">
       <table className="min-w-full divide-y divide-slate-200">
-        <thead className="bg-blue-200">
+        <thead className="bg-blue-800">
           <tr>
-            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">{t('reports.tableHeaders.am')}</th>
-            <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.outputStore')}</th>
-            <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.inputStore')}</th>
+            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white">{t('reports.tableHeaders.am')}</th>
+            <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-white">{t('reports.tableHeaders.transferGoods.outputStore')}</th>
+            <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-white">{t('reports.tableHeaders.transferGoods.inputStore')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200 bg-white">
@@ -180,18 +180,18 @@ const TransferGoodsTable: React.FC<TransferGoodsTableProps> = ({ orders, summary
           <div className="inline-block min-w-full py-2 align-middle px-6">
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
               <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-yellow-200">
+                <thead className="bg-blue-800 text-white">
                   <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 sm:pl-6">{t('reports.tableHeaders.transferGoods.transportVoucher')}</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.outputStore')}</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.outputCity')}</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.inputStore')}</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.inputCity')}</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.transferStoreDate')}</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.inventoryStatus')}</th>
-                    <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.dateFromTransfer')}</th>
-                    <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-slate-900">{t('reports.tableHeaders.transferGoods.amOutputStore')}</th>
-                    <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-slate-900 sm:pr-6">{t('reports.tableHeaders.transferGoods.amInputStore')}</th>
+                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6">{t('reports.tableHeaders.transferGoods.transportVoucher')}</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('reports.tableHeaders.transferGoods.outputStore')}</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('reports.tableHeaders.transferGoods.outputCity')}</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('reports.tableHeaders.transferGoods.inputStore')}</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('reports.tableHeaders.transferGoods.inputCity')}</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('reports.tableHeaders.transferGoods.transferStoreDate')}</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold">{t('reports.tableHeaders.transferGoods.inventoryStatus')}</th>
+                    <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold">{t('reports.tableHeaders.transferGoods.dateFromTransfer')}</th>
+                    <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold">{t('reports.tableHeaders.transferGoods.amOutputStore')}</th>
+                    <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold sm:pr-6">{t('reports.tableHeaders.transferGoods.amInputStore')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">

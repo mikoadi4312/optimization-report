@@ -116,13 +116,13 @@ const ResumeCard: React.FC<ResumeCardProps> = ({ title, totalLabel, totalValue, 
         <div className="bg-white rounded-lg shadow ring-1 ring-black ring-opacity-5 overflow-hidden">
 
             <table className="w-full text-sm border-collapse">
-                <thead className="bg-yellow-400 font-bold">
+                <thead className="bg-blue-800 text-white font-bold">
                     <tr>
-                        <th className="p-2 border border-slate-300 text-left text-black">{totalLabel}</th>
-                        <th className="p-2 border border-slate-300 text-right text-red-600">{formatInteger(totalValue)}</th>
-                        <th className="p-2 border border-slate-300 text-right text-black">%</th>
-                        {!isLimitedView && <th className="p-2 border border-slate-300 text-center text-black">Status</th>}
-                        {!isLimitedView && <th className="p-2 border border-slate-300 text-center text-black">Indicator</th>}
+                        <th className="p-2 border border-slate-300 text-left">{totalLabel}</th>
+                        <th className="p-2 border border-slate-300 text-right text-white">{formatInteger(totalValue)}</th>
+                        <th className="p-2 border border-slate-300 text-right">%</th>
+                        {!isLimitedView && <th className="p-2 border border-slate-300 text-center">Status</th>}
+                        {!isLimitedView && <th className="p-2 border border-slate-300 text-center">Indicator</th>}
                     </tr>
                 </thead>
                 <tbody className="text-black">
@@ -145,7 +145,7 @@ const ResumeCard: React.FC<ResumeCardProps> = ({ title, totalLabel, totalValue, 
                     ))}
                 </tbody>
             </table>
-        </div>
+        </div >
     );
 };
 
