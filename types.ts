@@ -221,4 +221,15 @@ export interface FileStatus {
 
 export type ReportData = SaleOrder | TransferGoodsData | DepositToolsData | FifoMistakeRow | RevenueStaffRow | IncentiveStaffRow | StaffMistakeResumeRow;
 
+// ... (kode lama) ...
+
 export type ReportType = 'SO_NOT_EXPORT' | 'TRANSFER_GOODS' | 'DEPOSIT_TOOLS' | 'FIFO' | 'REVENUE_STAFF' | 'INCENTIVE_STAFF';
+
+declare global {
+  interface Window {
+    electron: {
+      getDepositData: () => Promise<{ success: boolean; data?: DepositToolsData[]; error?: string }>;
+      importDepositData: (data: DepositToolsData[]) => Promise<{ success: boolean; count?: number; skipped?: number; error?: string }>;
+    }
+  }
+}

@@ -110,7 +110,7 @@
         {
             "name": "Staff FIFO Mistake Report",
             "status": "Active",
-            "description": "Detailed breakdown of FIFO mistakes by individual staff members."
+            "description": "Detailed breakdown of FIFO mistakes by individual staff members. Uses 'Detail-First' logic and specific Output Type mapping."
         },
         {
             "name": "Deposit Tools Report",
@@ -141,6 +141,14 @@
             {
                 "issue": "Deposit Tools Pairing",
                 "solution": "Transactions with 'Voucher Concert' pairing (Refund referencing Deposit) are automatically excluded. Duplicates only keep the latest entry."
+            },
+            {
+                "issue": "Staff FIFO Date Period",
+                "solution": "Report period is calculated from Min/Max dates of ALL Sales Data to show coverage, not just mistake dates. 1st-of-month end dates are displayed as previous day (month-end)."
+            },
+            {
+                "issue": "Detail File Classification",
+                "solution": "Mistake Type (CO, Full Exchange, etc.) is derived from 'Output Type' column in the Detail file, not the Sales Data."
             }
         ]
     }

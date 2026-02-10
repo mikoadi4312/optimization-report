@@ -22,6 +22,16 @@ const DepositToolsTable: React.FC<DepositToolsTableProps> = ({ orders, fileName 
     }).format(amount);
   };
 
+  const formatDate = (dateValue: any) => {
+    if (!dateValue) return '-';
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return String(dateValue);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const columns = useMemo(() => [
     {
       header: t('reports.tableHeaders.depositTools.store'),
@@ -54,7 +64,7 @@ const DepositToolsTable: React.FC<DepositToolsTableProps> = ({ orders, fileName 
       header: t('reports.tableHeaders.depositTools.date'),
       accessor: (row: DepositToolsData) => (
         <span className={row.checkDay > 15 ? 'text-red-600' : ''}>
-          {row.date}
+          {formatDate(row.date)}
         </span>
       ),
       width: 100,
@@ -123,7 +133,7 @@ const DepositToolsTable: React.FC<DepositToolsTableProps> = ({ orders, fileName 
       [headers.store]: order.store,
       [headers.inOutVoucher]: order.inOutVoucher,
       [headers.customerName]: order.customerName,
-      [headers.date]: order.date,
+      [headers.date]: formatDate(order.date),
       [headers.checkDay]: order.checkDay,
       [headers.paymentAmount]: order.paymentAmount,
       [headers.content]: order.content,
