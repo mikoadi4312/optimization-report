@@ -27,6 +27,7 @@ import MultiFileUpload from './components/MultiFileUpload';
 import { processSoNotExport } from './services/reports/soNotExport';
 import { processStaffFifoMistake } from './services/reports/staffFifoMistake';
 import { useLanguage } from './contexts/LanguageContext';
+import DepositManualInput from './components/reports/DepositManualInput';
 
 const initialFifoFileStatuses: Record<FifoFileKey, FileStatus> = {
   am: { status: 'pending', fileName: null, error: null },
@@ -462,118 +463,26 @@ const App: React.FC = () => {
       const dtResult = results.find(r => r && r.key === 'depositTools');
 
       if (dtResult && dtResult.data && dtResult.status === 'success') {
-        // SEKARANG: Kirim ke Database!
         const { dataRows, headers } = dtResult.data;
 
-        // Mapping dataRows ke Object DB
-        const normalizedHeaders = headers.map((h: string) => String(h || '').toLowerCase().trim());
-        const findHeader = (names: string[]) => {
-          for (const name of names) {
-            const idx = normalizedHeaders.findIndex((h: string) => h.includes(name.toLowerCase()));
-            if (idx !== -1) return idx;
-          }
-          return -1;
-        };
+        // Ambil AM Data yang benar (prioritas: baru diupload > state lama)
+        const amResult = results.find(r => r && r.key === 'am');
+        const effectiveAmData = amResult ? amResult.data : amData;
 
-        const indices = {
-          store: findHeader(['Store']),
-          inOutVoucher: findHeader(['In/out voucher', 'Invoucher']),
-          customerName: findHeader(['Customer name']),
-          date: findHeader(['Invoucher date', 'Date']),
-          amount: findHeader(['Payment amount']),
-          type: findHeader(['Voucher type']),
-          reference: findHeader(['Voucher concert', 'Voucher concern', 'Referrence']),
-          content: findHeader(['Content', 'Keterangan', 'Remark', 'Description', 'Uraian'])
-        };
-
-        const dbPayload = dataRows.map((row: any[]) => {
-          const amtRaw = String(row[indices.amount] || '0');
-          const amt = parseFloat(amtRaw.replace(/\./g, '').replace(",", ".")) || 0;
-          const vType = String(row[indices.type] || '');
-
-          // Simple type inference
-          const type = vType.toLowerCase().includes('refund') || amt < 0 ? 'REFUND' : 'DEPOSIT';
-
-          // NORMALISASI TANGGAL (Fix Date Issue)
-          // DB SQLite butuh YYYY-MM-DD atau ISO String agar bisa disortir/difilter
-          let dateStr = '';
-          const rawDate = row[indices.date];
-          const parsedDate = parseUnknownDateFormat(rawDate);
-
-          if (parsedDate) {
-            dateStr = parsedDate.toISOString();
-          } else {
-            // Fallback: Kirim apa adanya (raw string), siapa tahu sudah format string
-            dateStr = String(rawDate || '');
-          }
-
-          return {
-            store: String(row[indices.store] || ''),
-            inOutVoucher: String(row[indices.inOutVoucher] || ''),
-            customerName: String(row[indices.customerName] || ''),
-            date: dateStr, // Now normalized!
-            paymentAmount: amt,
-            type: type,
-            voucherReference: String(row[indices.reference] || ''),
-            content: String(row[indices.content] || '')
-          };
-        });
-
-        // Panggil DB Import
-        console.log("Importing to DB...", dbPayload.length, "rows");
-        await window.electron.importDepositData(dbPayload);
-
-        // Set status file sukses UI
-        setDtFileStatuses(prev => ({ ...prev, depositTools: { status: 'success', fileName: dtResult.fileName, error: null } }));
-
-        // Refresh UI dari Database (agar data baru muncul)
-        // Kita panggil loadDepositToolsFromDB().
-        // Meskipun amData mungkin stale di closure ini, kita harap data result dari DB sudah benar.
-        // Jika amData stale, loadDepositToolsFromDB akan menggunakan amData lama (which is fine if we updated just now).
-        // Wait, loadDepositToolsFromDB uses `amData` from state.
-        // If we just uploaded AM data, `amData` in state might not be updated yet in this render cycle?
-        // But `setAmData` was called. React queues updates.
-        // It's safer to wait/trigger via effect. But effect won't trigger if amData didn't change (e.g. re-upload same AM file).
-        // So explicit call is needed.
-        loadDepositToolsFromDB();
-
-        // Karena DB sudah terupdate, kita load ulang data dari DB agar update terlihat
-        // Note: Kita butuh 'amData' di loadDepositToolsFromDB. Saat ini 'amData' mungkin baru saja di-set (state async).
-        // Tapi karena loadDepositToolsFromDB ada dependensi [amData], dia akan otomatis terpanggil jika amData berubah!
-        // JIKA amData TIDAK berubah (sudah ada sebelumnya), kita harus force reload.
-        // Mari kita force call loadDepositToolsFromDB() di sini (walaupun amData mungkin stale di closure ini, tapi ref terbaru ada di react hook?)
-        // Ah, closure `amData` di sini adalah stale dari render sebelumnya.
-
-        // Solusi: Kita tidak panggil loadDepositToolsFromDB() manual sini.
-        // Kita andalkan useEffect:
-        // 1. Kalau AM Data baru di-upload -> AM Data berubah -> Effect jalan -> Load DB.
-        // 2. Kalau AM Data sudah ada (ga upload baru) -> AM Data tetap -> Effect gak jalan.
-        // Maka kita perlu "trigger" reload.
-        // Kita bisa kosongkan setReportData([]) dulu biar keliatan loading? Atau biarkan saja.
-        // Mari kita trigger force reload dengan memanggil ulang effect loadDepositToolsFromDB secara manual kalau AM Data stable.
-
-        // Hack: setTimeout biar state AM Data settle?
-        // Better: Kita panggil window.electron.getDepositData() lagi di sini lalu setReportData manual?
-        // Terlalu duplikat.
-
-        // Kita trigger reload manual:
-        const newDataResult = await window.electron.getDepositData();
-        if (newDataResult.success && newDataResult.data && amData) { // Pakai amData dari state (masih stale?)
-          // CLOSURE PROBLEM: 'amData' di sini adalah dari render sebelumnya.
-          // Kalau user upload AM file barengan, 'amData' di variable ini MASIH KOSONG/LAMA.
-          // Tapi kita punya 'results' yang berisi data AM baru!
-
-          const amResult = results.find(r => r && r.key === 'am');
-          const effectiveAmData = amResult ? amResult.data : amData; // Use new data if uploaded, else old state
-
-          if (effectiveAmData) {
-            const processedData = processDepositToolsFromDB(newDataResult.data, effectiveAmData);
-            setReportData(processedData);
-          }
+        if (!effectiveAmData) {
+          // Jika AM data tidak ada sama sekali, user harus upload.
+          // (Status update akan ditangani di bawah)
+        } else {
+          // PROSES LANGSUNG (Direct Excel -> Report)
+          // Ini untuk memastikan data langsung tampil tanpa tergantung filter DB yang mungkin berbeda.
+          const processedData = processDepositTools(dataRows, headers, effectiveAmData);
+          setReportData(processedData);
         }
+
+        setDtFileStatuses(prev => ({ ...prev, depositTools: { status: 'success', fileName: dtResult.fileName, error: null } }));
       }
 
-      // Update AM Status logic too
+      // Update AM Status logic
       const amResult = results.find(r => r && r.key === 'am');
       if (amResult && amResult.status === 'success') {
         setDtFileStatuses(prev => ({ ...prev, am: { status: 'success', fileName: amResult.fileName, error: null } }));
@@ -1218,10 +1127,12 @@ const App: React.FC = () => {
 
           {renderSubTypeSelectors()}
 
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
               {renderFileUpload()}
               <InstructionCard reportType={reportType} fifoSubType={fifoSubType} />
+              {/* Manual Input Removed as requested by User */}
             </div>
             <div className="lg:col-span-2">
 

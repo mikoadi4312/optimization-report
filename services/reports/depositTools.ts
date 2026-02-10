@@ -153,6 +153,12 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
 
     const normalizedHeaders = headers.map(h => String(h || '').toLowerCase().trim());
     const findHeader = (possibleNames: string[]): number => {
+        // 1. Priority: Exact Match
+        for (const name of possibleNames) {
+            const index = normalizedHeaders.findIndex(h => h === name.toLowerCase());
+            if (index !== -1) return index;
+        }
+        // 2. Fallback: Partial Match
         for (const name of possibleNames) {
             const index = normalizedHeaders.findIndex(h => h.includes(name.toLowerCase()));
             if (index !== -1) return index;
@@ -161,7 +167,7 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
     };
 
     const headerIndices = {
-        store: findHeader(['Store']),
+        store: findHeader(['storeid', 'store code', 'store', 'toko', 'unit bisnis']),
         inOutVoucher: findHeader(['In/out voucher', 'Invoucher']),
         customerName: findHeader(['Customer name']),
         invoucherDate: findHeader(['Invoucher date', 'Date']),
