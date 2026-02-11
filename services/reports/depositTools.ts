@@ -148,9 +148,9 @@ const calculateDepositMistakes = (allTransactions: Transaction[], amData: Proces
 };
 
 // ---- EXCEL PARSER ----
-export const processDepositTools = (dataRows: any[][], headers: string[], amData: ProcessedAmData): DepositToolsData[] => {
-    if (!amData) throw new Error("AM Data is missing for Deposit Tools report.");
 
+// New Helper: Parse Excel Rows to Transactions (for DB Import)
+export const parseDepositExcelRows = (dataRows: any[][], headers: string[]): Transaction[] => {
     const normalizedHeaders = headers.map(h => String(h || '').toLowerCase().trim());
     const findHeader = (possibleNames: string[]): number => {
         // 1. Priority: Exact Match
@@ -168,13 +168,13 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
 
     const headerIndices = {
         store: findHeader(['storeid', 'store code', 'store', 'toko', 'unit bisnis']),
-        inOutVoucher: findHeader(['In/out voucher', 'Invoucher']),
-        customerName: findHeader(['Customer name']),
-        invoucherDate: findHeader(['Invoucher date', 'Date']),
-        content: findHeader(['Content']),
-        voucherType: findHeader(['Voucher type']),
-        paymentAmount: findHeader(['Payment amount']),
-        voucherReference: findHeader(['Voucher concert', 'Voucher concern', 'Voucher connect', 'Referrence']),
+        inOutVoucher: findHeader(['In/out voucher', 'Invoucher', 'Nomor voucher', 'No voucher', 'Voucher no']),
+        customerName: findHeader(['Customer name', 'Nama pelanggan', 'Customer']),
+        invoucherDate: findHeader(['Invoucher date', 'Date', 'Tanggal', 'Waktu']),
+        content: findHeader(['Content', 'Konten', 'Keterangan']),
+        voucherType: findHeader(['Voucher type', 'Jenis voucher', 'Tipe voucher']),
+        paymentAmount: findHeader(['Payment amount', 'Amount', 'Jumlah', 'Total bayar', 'Total']),
+        voucherReference: findHeader(['Voucher concert', 'Voucher concern', 'Voucher connect', 'Referrence', 'Reference', 'Referensi']),
     };
 
     const requiredHeaders: { [key: string]: string } = {
@@ -182,7 +182,6 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
         inOutVoucher: 'In/out voucher or Invoucher',
         customerName: 'Customer name',
         invoucherDate: 'Invoucher date or Date',
-        content: 'Content',
         voucherType: 'Voucher type',
         paymentAmount: 'Payment amount',
     };
@@ -233,6 +232,15 @@ export const processDepositTools = (dataRows: any[][], headers: string[], amData
         });
     });
 
+    return allTransactions;
+};
+
+export const processDepositTools = (dataRows: any[][], headers: string[], amData: ProcessedAmData): DepositToolsData[] => {
+    if (!amData) throw new Error("AM Data is missing for Deposit Tools report.");
+
+    // Use the helper to parse rows first
+    const allTransactions = parseDepositExcelRows(dataRows, headers);
+
     return calculateDepositMistakes(allTransactions, amData);
 };
 
@@ -259,15 +267,16 @@ export const processDepositToolsFromDB = (dbRows: any[], amData: ProcessedAmData
         const checkDay = date ? Math.floor((today.getTime() - date.getTime()) / (1000 * 3600 * 24)) : 0;
 
         // Logic Voucher Type emulation for FIFO
-        // Di DB kita simpan type simpel 'DEPOSIT' atau 'REFUND'. 
-        // Tapi logic FIFO butuh string spesifik "Erablue - Collecting sales deposits" biar lolos filter.
-        // Jadi kita rekonstruksi.
-        let voucherType = '';
-        if (row.type === 'DEPOSIT') {
+        // DB stores 'type'. We need to ensure it matches what calculateDepositMistakes expects.
+        // Expects: 'Erablue - Collecting sales deposits'
+        let voucherType = String(row.type || '');
+
+        // If DB has the generic "DEPOSIT" tag (from fallback), map it to the specific string.
+        // Also if it already contains "Collecting sales", preserve/standardize it.
+        if (voucherType === 'DEPOSIT' || voucherType.includes('Collecting sales deposits')) {
             voucherType = 'Erablue - Collecting sales deposits';
-        } else {
-            voucherType = 'Refund'; // Atau string apapun yang mengandung refund
         }
+        // Otherwise, leave it as is (e.g. 'Refund', or other types).
 
         const inOutVoucher = String(row.voucher_no || '').trim();
         const voucherReference = String(row.reference || '').trim();

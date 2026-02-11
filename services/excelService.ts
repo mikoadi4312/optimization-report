@@ -204,6 +204,18 @@ export const processMainDataFile = (file: File, reportType: 'TRANSFER_GOODS' | '
           } else {
             resolve({ dataRows: json.slice(1), headers });
           }
+        } else if (reportType === 'DEPOSIT_TOOLS') {
+          // FIX: Use robust header detection for Deposit Tools
+          // Search for "Store" (or aliases) AND "Voucher" related columns
+          const foundHeaders = findHeadersAndData(json, ['store', 'voucher']);
+          if (foundHeaders) {
+            console.log("Found Deposit Tools headers matching 'store' & 'voucher'");
+            resolve(foundHeaders);
+          } else {
+            // Fallback to row 0 if detection fails (old behavior)
+            console.warn("Could not auto-detect Deposit Tools headers. Falling back to Row 0.");
+            resolve({ dataRows: json.slice(1), headers });
+          }
         } else {
           const dataRows = reportType === 'TRANSFER_GOODS' ? json.slice(2) : json.slice(1);
           resolve({ dataRows, headers });

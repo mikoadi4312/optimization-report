@@ -44,23 +44,30 @@ function setupIpcHandlers() {
       let successCount = 0;
       let errorCount = 0;
 
-      // Cara Brutal tapi Efektif: Loop insert satu per satu (transaction akan lebih baik nanti)
+      // MODE: INCREMENTAL UPDATE (Tambahkan data baru, update data lama)
       // Cek Duplikat berdasarkan voucher_no agar history aman
       for (const row of dataRows) {
+        // Skip rows without valid voucher number
+        if (!row.inOutVoucher) {
+          errorCount++;
+          continue;
+        }
+
         // Cek apakah voucher ini sudah ada? (Simple check)
         const exists = await runQuery('SELECT id FROM deposit_transactions WHERE voucher_no = ? LIMIT 1', [row.inOutVoucher]);
 
         if (exists.length === 0) {
+          // INSERT NEW
           await runExecute(
             `INSERT INTO deposit_transactions (store_code, voucher_no, customer_name, date, amount, type, reference, content)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              row.store || '',
-              row.inOutVoucher || '',
+              row.storeCode || '',
+              row.inOutVoucher,
               row.customerName || '',
               row.date || '',
-              row.paymentAmount || 0,
-              row.type || (row.inOutVoucher?.startsWith('IN') ? 'DEPOSIT' : 'REFUND'),
+              row.amount || 0,
+              row.voucherType || (row.inOutVoucher?.startsWith('IN') ? 'DEPOSIT' : 'REFUND'),
               row.voucherReference || '',
               row.content || ''
             ]
@@ -73,11 +80,11 @@ function setupIpcHandlers() {
              SET store_code = ?, customer_name = ?, date = ?, amount = ?, type = ?, reference = ?, content = ?
              WHERE id = ?`,
             [
-              row.store || '',
+              row.storeCode || '',
               row.customerName || '',
               row.date || '',
-              row.paymentAmount || 0,
-              row.type || (row.inOutVoucher?.startsWith('IN') ? 'DEPOSIT' : 'REFUND'),
+              row.amount || 0,
+              row.voucherType || (row.inOutVoucher?.startsWith('IN') ? 'DEPOSIT' : 'REFUND'),
               row.voucherReference || '',
               row.content || '',
               exists[0].id

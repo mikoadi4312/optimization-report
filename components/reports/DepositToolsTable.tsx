@@ -208,6 +208,7 @@ const DepositToolsTable: React.FC<DepositToolsTableProps> = ({ orders, fileName 
       </div>
 
       <VirtualTable
+        key={orders.length}
         data={orders}
         columns={columns}
         estimateSize={50}

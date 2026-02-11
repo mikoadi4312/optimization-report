@@ -1,52 +1,65 @@
 {
-    "updated_at": "2026-02-10T10:35:00+07:00",
+    "updated_at": "2026-02-10T18:49:00+07:00",
     "working_on": {
-        "feature": "SQL Pilot (Deposit Tools)",
-        "task": "Implementasi Database SQLite & IPC Handlers",
-        "status": "coding",
+        "feature": "Deposit Tools Report",
+        "task": "Fixing Data Integrity Issues (NULL Store Codes)",
+        "status": "In Progress / Verification",
         "files": [
-            "electron/main.cjs",
-            "electron/database.cjs",
-            "docs/plans/sql-pilot/plan.md"
+            "services/reports/depositTools.ts",
+            "App.tsx",
+            "services/excelService.ts"
         ],
         "blockers": [],
-        "notes": "Backend logic (CRUD) seems mostly implemented in main.cjs. Next focus should be Frontend Integration."
+        "notes": "User reported NULL store codes. Identified issue: Excel file has empty first column and 'STOREID' column is far right. Updated header detection logic."
     },
     "pending_tasks": [
         {
-            "task": "Frontend Integration (React call to window.electron)",
+            "task": "Verify Data Accuracy",
             "priority": "high",
-            "notes": "Perlu update komponen React untuk mengambil data dari 'db:get-deposit-data' bukan dari state lokal/Excel saja."
-        },
-        {
-            "task": "Testing & Validation",
-            "priority": "medium",
-            "notes": "Pastikan data persisten setelah restart aplikasi."
+            "notes": "Ensure all store codes are populated correctly after re-upload."
         }
     ],
     "recent_changes": [
         {
             "timestamp": "2026-02-10",
-            "type": "feature",
-            "description": "Setup SQLite connection and created 'deposit_transactions' table.",
+            "type": "bugfix",
+            "description": "Enhanced Excel header detection in `services/reports/depositTools.ts` to support 'STOREID' and 'Store Code' aliases and prioritize exact matches.",
             "files": [
-                "electron/database.cjs"
+                "services/reports/depositTools.ts"
             ]
         },
         {
             "timestamp": "2026-02-10",
-            "type": "feature",
-            "description": "Implemented IPC handlers for importing and fetching deposit data.",
+            "type": "refactor",
+            "description": "Reverted Manual Input feature and returned to direct Excel-to-Report processing flow in `App.tsx` based on user feedback.",
+            "files": [
+                "App.tsx"
+            ]
+        },
+        {
+            "timestamp": "2026-02-10",
+            "type": "database",
+            "description": "Implemented robust data import logic in Electron backend (main.cjs) to update existing records instead of skipping duplicates.",
             "files": [
                 "electron/main.cjs"
             ]
         }
     ],
-    "errors_encountered": [],
+    "errors_encountered": [
+        {
+            "error": "Data imported as NULL in DB",
+            "solution": "Fixed Excel parsing logic to correctly identify 'STOREID' column which was previously missed due to empty first column.",
+            "resolved": true
+        }
+    ],
     "decisions_made": [
         {
-            "decision": "Use INSERT OR UPDATE logic",
-            "reason": "To handle data correction from imported Excels without duplicating records (based on voucher_no)."
+            "decision": "Revert Manual Input UI",
+            "reason": "User found it intrusive and unnecessary. Removed to clean up the UI."
+        },
+        {
+            "decision": "Prioritize Direct Excel Processing",
+            "reason": "To ensure immediate data visibility and bypass potential database filter issues during troubleshooting."
         }
     ]
 }

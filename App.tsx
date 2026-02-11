@@ -5,7 +5,7 @@ import { processAmFile, processCategoryFile, processMainDataFile, processStaffIn
 import { parseUnknownDateFormat } from './services/utils';
 import { processFifoMistake } from './services/reports/fifoMistake';
 import { processTransferGoods } from './services/reports/transferGoods';
-import { processDepositTools, processDepositToolsFromDB } from './services/reports/depositTools';
+import { processDepositTools, processDepositToolsFromDB, parseDepositExcelRows } from './services/reports/depositTools';
 
 // ... (existing imports)
 
@@ -397,26 +397,25 @@ const App: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const result = await window.electron.getDepositData();
+      // CALL CLOUDFLARE API
+      const response = await fetch('/api/deposit');
 
-      if (result && result.success && result.data) {
-        // Data dari DB masih mentah, proses pakai Logic FIFO
-        const processedData = processDepositToolsFromDB(result.data, amData);
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      const dbRows = await response.json();
+
+      if (Array.isArray(dbRows)) {
+        console.log("D1 Data Loaded:", dbRows.length, "rows");
+        const processedData = processDepositToolsFromDB(dbRows, amData);
         setReportData(processedData);
-        setFileName('Deposit_Tools_DB_Report');
-
-        if (processedData.length === 0) {
-          // setError(t('app.errors.noRecords'));
-        }
-      } else {
-        if (result.error) console.error("DB Error:", result.error);
+        // setFileName('Cloud_Database_Report'); 
       }
     } catch (err) {
-      console.error("Failed to load from DB:", err);
+      console.error("Failed to load from Cloud DB:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [amData, t]);
+  }, [amData]);
 
   // Load data when entering Deposit Tools menu AND AM Data is ready
   useEffect(() => {
@@ -473,10 +472,63 @@ const App: React.FC = () => {
           // Jika AM data tidak ada sama sekali, user harus upload.
           // (Status update akan ditangani di bawah)
         } else {
-          // PROSES LANGSUNG (Direct Excel -> Report)
-          // Ini untuk memastikan data langsung tampil tanpa tergantung filter DB yang mungkin berbeda.
-          const processedData = processDepositTools(dataRows, headers, effectiveAmData);
-          setReportData(processedData);
+          // 1. SHOW PREVIEW FIRST (Prioritas Utama: Data Tampil)
+          console.group("🔍 DEPOSIT TOOLS DEBUG");
+          console.log("1. Raw Data Rows:", dataRows.length);
+          console.log("2. Detected Headers:", headers);
+          console.log("3. AM Data Available:", !!effectiveAmData, effectiveAmData?.codeToName?.size || 0);
+
+          try {
+            // 1. SHOW PREVIEW FIRST (Prioritas Utama: Data Tampil)
+            const processedData = processDepositTools(dataRows, headers, effectiveAmData);
+            console.log("4. Final Processed Data:", processedData.length, "rows");
+            setReportData(processedData);
+
+            // 2. BACKGROUND SAVE TO CLOUD D1 (Silent)
+            (async () => {
+              try {
+                const transactions = parseDepositExcelRows(dataRows, headers);
+                // Sanitize data for API
+                const cleanTransactions = transactions.map(t => ({
+                  storeCode: t.storeCode,
+                  inOutVoucher: t.inOutVoucher,
+                  customerName: t.customerName,
+                  date: t.date,
+                  amount: t.amount,
+                  voucherType: t.voucherType,
+                  voucherReference: t.voucherReference,
+                  content: t.content
+                }));
+
+                console.log("☁️ Uploading to Cloud D1...", cleanTransactions.length, "rows");
+
+                const response = await fetch('/api/deposit', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(cleanTransactions)
+                });
+
+                if (!response.ok) {
+                  const errorText = await response.text();
+                  throw new Error(`Server Error: ${response.status} ${errorText}`);
+                }
+
+                const result = await response.json() as any;
+                if (result.success) {
+                  console.log("✅ CLOUD SYNC SUCCESS:", result.count, "records saved.");
+                } else {
+                  console.warn("⚠️ CLOUD SYNC FAILED:", result.error);
+                }
+              } catch (bgError) {
+                console.error("❌ CLOUD NETWORK ERROR:", bgError);
+              }
+            })();
+
+          } catch (err: any) {
+            console.error("❌ PROCESSING ERROR:", err);
+            setError("Gagal memproses data: " + err.message);
+          }
+          console.groupEnd();
         }
 
         setDtFileStatuses(prev => ({ ...prev, depositTools: { status: 'success', fileName: dtResult.fileName, error: null } }));

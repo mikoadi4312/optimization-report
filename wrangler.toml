@@ -1,0 +1,7 @@
+name = "optimization-report"
+compatibility_date = "2024-02-11"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "optimization-db"
+database_id = "9940b49c-966f-450d-8e23-18a692840d40"

@@ -80,6 +80,10 @@
             {
                 "issue": "Electron Rebuild",
                 "solution": "Native modules like 'better-sqlite3' must be rebuilt for Electron using '@electron/rebuild'."
+            },
+            {
+                "issue": "Excel Column Naming Inconsistency",
+                "solution": "Deposit Tools Excel sometimes has 'STOREID' at column I/J instead of 'Store' at column A. Header detection logic must scan for 'STOREID', 'Store Code', 'Toko' globally."
             }
         ]
     }
