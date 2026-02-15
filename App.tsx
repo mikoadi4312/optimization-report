@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react'; // Force reload
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'; // Force reload
 // FIX: Added DepositToolsData to the import to resolve 'Cannot find name' error.
 import { ReportData, ReportType, AMSummaryData, TransferGoodsReportPayload, FifoMistakeReportPayload, ProcessedAmData, FifoWeeklySummary, FifoFileKey, FileStatus, TgFileKey, DtFileKey, DepositToolsData, RsFileKey, RevenueStaffRow, StaffInfo, IncentiveCriterion, IsFileKey, IncentiveStaffRow, IsbFileKey, BolltechIncentiveCriterion, UnderperformedCategoryData, FifoResumeData, StaffFifoFileKey, StaffMistakeResumeRow, StaffMistakeReportPayload } from './types';
 import { processAmFile, processCategoryFile, processMainDataFile, processStaffInfoFile, processIncentiveCriteriaFile, processBolltechIncentiveCriteriaFile } from './services/excelService';
@@ -16,6 +16,7 @@ import { processDepositTools, processDepositToolsFromDB, parseDepositExcelRows }
 import { processRevenueStaff } from './services/reports/revenueStaff';
 import { processIncentiveStaff } from './services/reports/incentiveStaff';
 import { processIncentiveStaffBolltech } from './services/reports/incentiveStaffBolltech';
+import { apiService, ApiTransaction } from './services/api';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import FileUpload from './components/FileUpload';
@@ -164,6 +165,9 @@ const App: React.FC = () => {
   } | null>(null);
 
   const [staffFifoDateRange, setStaffFifoDateRange] = useState<{ min: Date | null, max: Date | null } | null>(null);
+
+  // Ref to prevent reloading from DB immediately after manual file upload
+  const blockDbLoadRef = useRef(false);
 
   const handleClearData = useCallback(() => {
     if (reportType === 'FIFO') {
@@ -397,12 +401,8 @@ const App: React.FC = () => {
 
     try {
       setIsLoading(true);
-      // CALL CLOUDFLARE API
-      const response = await fetch('/api/deposit');
-
-      if (!response.ok) throw new Error('Network response was not ok');
-
-      const dbRows = await response.json();
+      // CALL CLOUDFLARE API via Services
+      const dbRows = await apiService.fetchDeposits();
 
       if (Array.isArray(dbRows)) {
         console.log("D1 Data Loaded:", dbRows.length, "rows");
@@ -412,6 +412,7 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error("Failed to load from Cloud DB:", err);
+      // Fallback: don't break UI, just log error
     } finally {
       setIsLoading(false);
     }
@@ -420,6 +421,11 @@ const App: React.FC = () => {
   // Load data when entering Deposit Tools menu AND AM Data is ready
   useEffect(() => {
     if (reportType === 'DEPOSIT_TOOLS' && amData) {
+      if (blockDbLoadRef.current) {
+        console.log("🚫 Skipping DB Load due to recent manual file upload");
+        blockDbLoadRef.current = false;
+        return;
+      }
       loadDepositToolsFromDB();
     }
   }, [reportType, amData, loadDepositToolsFromDB]);
@@ -479,6 +485,9 @@ const App: React.FC = () => {
           console.log("3. AM Data Available:", !!effectiveAmData, effectiveAmData?.codeToName?.size || 0);
 
           try {
+            // BLOCK DB LOAD to prevent overwriting this data
+            blockDbLoadRef.current = true;
+
             // 1. SHOW PREVIEW FIRST (Prioritas Utama: Data Tampil)
             const processedData = processDepositTools(dataRows, headers, effectiveAmData);
             console.log("4. Final Processed Data:", processedData.length, "rows");
@@ -489,11 +498,11 @@ const App: React.FC = () => {
               try {
                 const transactions = parseDepositExcelRows(dataRows, headers);
                 // Sanitize data for API
-                const cleanTransactions = transactions.map(t => ({
+                const cleanTransactions: ApiTransaction[] = transactions.map(t => ({
                   storeCode: t.storeCode,
                   inOutVoucher: t.inOutVoucher,
                   customerName: t.customerName,
-                  date: t.date,
+                  date: t.date ? t.date.toISOString() : null, // Convert Date object to string
                   amount: t.amount,
                   voucherType: t.voucherType,
                   voucherReference: t.voucherReference,
@@ -502,22 +511,12 @@ const App: React.FC = () => {
 
                 console.log("☁️ Uploading to Cloud D1...", cleanTransactions.length, "rows");
 
-                const response = await fetch('/api/deposit', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(cleanTransactions)
-                });
+                const result = await apiService.uploadDeposits(cleanTransactions);
 
-                if (!response.ok) {
-                  const errorText = await response.text();
-                  throw new Error(`Server Error: ${response.status} ${errorText}`);
-                }
-
-                const result = await response.json() as any;
                 if (result.success) {
                   console.log("✅ CLOUD SYNC SUCCESS:", result.count, "records saved.");
                 } else {
-                  console.warn("⚠️ CLOUD SYNC FAILED:", result.error);
+                  console.warn("⚠️ CLOUD SYNC FAILED:", result);
                 }
               } catch (bgError) {
                 console.error("❌ CLOUD NETWORK ERROR:", bgError);

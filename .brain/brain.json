@@ -1,90 +1,141 @@
 {
     "meta": {
         "schema_version": "1.1.0",
-        "awf_version": "3.3.0"
+        "awf_version": "3.3.0",
+        "updated_at": "2026-02-12T16:40:00+07:00"
     },
     "project": {
-        "name": "yusuf-adi-pratama---optimization-report-10",
-        "type": "Electron Desktop App",
-        "status": "In Development"
+        "name": "Optimization Report",
+        "type": "Web Application",
+        "status": "Development",
+        "description": "Aplikasi pelaporan optimalisasi untuk manajemen toko, mencakup laporan FIFO, transfer barang, deposit manual, dan kinerja staf."
     },
     "tech_stack": {
         "frontend": {
-            "framework": "React",
-            "build_tool": "Vite",
+            "framework": "React (Vite)",
             "language": "TypeScript",
-            "styling": "Tailwind CSS"
+            "styling": "Tailwind CSS",
+            "icons": "Lucide React",
+            "charts": "Recharts"
         },
         "backend": {
-            "runtime": "Electron (Node.js)",
-            "communication": "IPC (Inter-Process Communication)"
+            "runtime": "Cloudflare Pages Functions",
+            "database": "Cloudflare D1 (SQLite)",
+            "orm": "Drizzle ORM (migrasi manual)",
+            "file_processing": "ExcelJS"
         },
-        "database": {
-            "type": "SQLite",
-            "library": "sqlite3",
-            "file": "optimization_report.db"
+        "deployment": {
+            "platform": "Cloudflare Pages",
+            "build_command": "npm run build",
+            "output_dir": "dist"
         }
     },
     "database_schema": {
-        "summary": "Local SQLite database to store persistent data for reports, replacing volatile Excel uploads.",
+        "summary": "Database SQLite di Cloudflare D1 untuk menyimpan data transaksi deposit manual.",
         "tables": [
             {
                 "name": "deposit_transactions",
                 "columns": [
-                    "id (INTEGER PRIMARY KEY AUTOINCREMENT)",
-                    "store_code (TEXT)",
-                    "voucher_no (TEXT UNIQUE)",
-                    "customer_name (TEXT)",
-                    "date (TEXT)",
-                    "amount (REAL)",
-                    "type (TEXT) - 'DEPOSIT' or 'REFUND'",
-                    "reference (TEXT)",
-                    "content (TEXT)"
+                    {
+                        "name": "id",
+                        "type": "INTEGER",
+                        "primary_key": true,
+                        "auto_increment": true
+                    },
+                    {
+                        "name": "store_code",
+                        "type": "TEXT"
+                    },
+                    {
+                        "name": "voucher_no",
+                        "type": "TEXT",
+                        "unique": true
+                    },
+                    {
+                        "name": "customer_name",
+                        "type": "TEXT"
+                    },
+                    {
+                        "name": "date",
+                        "type": "TEXT"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "REAL"
+                    },
+                    {
+                        "name": "type",
+                        "type": "TEXT"
+                    },
+                    {
+                        "name": "reference",
+                        "type": "TEXT"
+                    },
+                    {
+                        "name": "content",
+                        "type": "TEXT"
+                    },
+                    {
+                        "name": "created_at",
+                        "type": "TIMESTAMP",
+                        "default": "CURRENT_TIMESTAMP"
+                    }
                 ],
-                "relationships_explained": "Standalone table for storing historical deposit transactions."
+                "relationships_explained": "Tabel tunggal untuk menyimpan riwayat transaksi deposit manual yang diunggah dari Excel."
             }
         ]
     },
     "api_endpoints": [
         {
-            "channel": "db:get-deposit-data",
-            "type": "IPC",
-            "explained": "Retrieves all deposit transactions from the database, ordered by date and ID descending."
+            "path": "/api/deposit",
+            "method": "GET",
+            "description": "Mengambil semua data transaksi deposit dari database.",
+            "response": "Array of ApiTransaction objects"
         },
         {
-            "channel": "db:import-deposit",
-            "type": "IPC",
-            "explained": "Imports a list of transactions. Updates existing records if 'voucher_no' matches, otherwise inserts new records."
+            "path": "/api/deposit",
+            "method": "POST",
+            "description": "Menyimpan data transaksi baru ke database. Mendukung batch upload.",
+            "body": "Array of ApiTransaction objects",
+            "response": "{ success: boolean, count: number, message: string }"
         }
     ],
     "features": [
         {
-            "name": "SQL Pilot (Deposit Tools)",
-            "status": "In Progress",
-            "description": "Migration from Excel-based volatile storage to SQLite persistent storage for Deposit Tools."
+            "name": "Deposit Manual Report",
+            "status": "Implemented",
+            "description": "Upload file Excel Deposit & AM, validasi data, deteksi duplikat, dan simpan ke Cloudflare D1."
         },
         {
-            "name": "Staff FIFO Mistake Report",
+            "name": "Staff FIFO Mistake",
             "status": "Implemented",
-            "description": "Report for tracking staff FIFO errors."
+            "description": "Laporan kesalahan FIFO staf berdasarkan pencocokan IMEI."
+        },
+        {
+            "name": "Transfer Goods Report",
+            "status": "Implemented",
+            "description": "Laporan keterlambatan transfer barang antar toko."
+        },
+        {
+            "name": "Revenue Staff Report",
+            "status": "Implemented",
+            "description": "Laporan performa pendapatan staf bulanan."
         }
     ],
     "knowledge_items": {
         "patterns": [
-            {
-                "name": "IPC Transaction Handling",
-                "description": "Uses 'ipcMain.handle' for async database operations. Returns { success: true/false, data/error }."
-            }
+            "File Upload & Processing di Client-side (React + ExcelJS)",
+            "Serverless Backend dengan Cloudflare Pages Functions",
+            "Database D1 dengan akses via binding 'DB'"
         ],
         "gotchas": [
-            {
-                "issue": "Electron Rebuild",
-                "solution": "Native modules like 'better-sqlite3' must be rebuilt for Electron using '@electron/rebuild'."
-            },
-            {
-                "issue": "Excel Column Naming Inconsistency",
-                "solution": "Deposit Tools Excel sometimes has 'STOREID' at column I/J instead of 'Store' at column A. Header detection logic must scan for 'STOREID', 'Store Code', 'Toko' globally."
-            }
+            "Local Wrangler D1 bersifat ephemeral (hilang saat restart) kecuali dipersisting, tapi tabel perlu dibuat ulang jika db file terhapus.",
+            "Wrangler local development environment issue: `db.exec()` bisa menyebabkan error `undefined reading 'duration'`, gunakan `db.prepare().run()` sebagai gantinya."
+        ],
+        "conventions": [
+            "Komponen UI reusable di folder `components/`",
+            "Logika bisnis laporan di folder `services/reports/`",
+            "API handlers di folder `functions/api/`"
         ]
     }
 }

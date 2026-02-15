@@ -1,65 +1,62 @@
 {
-    "updated_at": "2026-02-10T18:49:00+07:00",
+    "updated_at": "2026-02-12T16:40:00+07:00",
     "working_on": {
-        "feature": "Deposit Tools Report",
-        "task": "Fixing Data Integrity Issues (NULL Store Codes)",
-        "status": "In Progress / Verification",
+        "feature": "Deposit Tools Integration",
+        "task": "Fix DB table error and UI sync",
+        "status": "completed",
         "files": [
-            "services/reports/depositTools.ts",
+            "functions/api/deposit.ts",
             "App.tsx",
-            "services/excelService.ts"
+            "services/api.ts"
         ],
         "blockers": [],
-        "notes": "User reported NULL store codes. Identified issue: Excel file has empty first column and 'STOREID' column is far right. Updated header detection logic."
+        "notes": "Upload sukses, data muncul, dan tersimpan ke DB."
     },
     "pending_tasks": [
         {
-            "task": "Verify Data Accuracy",
+            "task": "Check production deployment",
             "priority": "high",
-            "notes": "Ensure all store codes are populated correctly after re-upload."
+            "notes": "Perlu dipastikan codingan jalan di production URL"
         }
     ],
     "recent_changes": [
         {
-            "timestamp": "2026-02-10",
-            "type": "bugfix",
-            "description": "Enhanced Excel header detection in `services/reports/depositTools.ts` to support 'STOREID' and 'Store Code' aliases and prioritize exact matches.",
+            "timestamp": "2026-02-12T16:00:00+07:00",
+            "type": "fix",
+            "description": "Fixed 'no such table' error by using `db.prepare().run()` instead of `db.exec()`.",
             "files": [
-                "services/reports/depositTools.ts"
+                "functions/api/deposit.ts"
             ]
         },
         {
-            "timestamp": "2026-02-10",
-            "type": "refactor",
-            "description": "Reverted Manual Input feature and returned to direct Excel-to-Report processing flow in `App.tsx` based on user feedback.",
+            "timestamp": "2026-02-12T16:10:00+07:00",
+            "type": "fix",
+            "description": "Fixed UI blank screen after upload by using `useRef` to block immediate DB re-fetch.",
             "files": [
                 "App.tsx"
-            ]
-        },
-        {
-            "timestamp": "2026-02-10",
-            "type": "database",
-            "description": "Implemented robust data import logic in Electron backend (main.cjs) to update existing records instead of skipping duplicates.",
-            "files": [
-                "electron/main.cjs"
             ]
         }
     ],
     "errors_encountered": [
         {
-            "error": "Data imported as NULL in DB",
-            "solution": "Fixed Excel parsing logic to correctly identify 'STOREID' column which was previously missed due to empty first column.",
+            "error": "D1_ERROR: no such table: deposit_transactions",
+            "solution": "Replaced `db.exec()` with separate `db.prepare().run()` statements for table creation.",
+            "resolved": true
+        },
+        {
+            "error": "UI shows 'No Report' after successful upload",
+            "solution": "Added `blockDbLoadRef` to prevent race condition between local state update and DB fetch.",
             "resolved": true
         }
     ],
     "decisions_made": [
         {
-            "decision": "Revert Manual Input UI",
-            "reason": "User found it intrusive and unnecessary. Removed to clean up the UI."
+            "decision": "Use sequential insert for uploads",
+            "reason": "Ensure stability and avoid batch size limits or 'SQLITE_ERROR' on large payloads."
         },
         {
-            "decision": "Prioritize Direct Excel Processing",
-            "reason": "To ensure immediate data visibility and bypass potential database filter issues during troubleshooting."
+            "decision": "Auto-create table on API request",
+            "reason": "Simplifies local development without needing manual migration run every time."
         }
     ]
 }
