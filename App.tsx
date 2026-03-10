@@ -29,6 +29,7 @@ import { processSoNotExport } from './services/reports/soNotExport';
 import { processStaffFifoMistake } from './services/reports/staffFifoMistake';
 import { useLanguage } from './contexts/LanguageContext';
 import DepositManualInput from './components/reports/DepositManualInput';
+import VoucherExtractor from './components/reports/VoucherExtractor';
 
 const initialFifoFileStatuses: Record<FifoFileKey, FileStatus> = {
   am: { status: 'pending', fileName: null, error: null },
@@ -1165,55 +1166,59 @@ const App: React.FC = () => {
       case 'REVENUE_STAFF': return t('app.buttons.revenueStaff');
       case 'INCENTIVE_STAFF': return t('app.buttons.incentiveStaff');
       case 'SO_NOT_EXPORT': return t('app.buttons.soNotExport');
+      case 'VOUCHER_EXTRACTOR': return 'Voucher Extractor';
       default: return 'Optimization Report';
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800">
+    <div className="flex min-h-screen bg-slate-900 font-sans text-slate-800">
       <Sidebar activeReport={reportType} onSelectReport={handleReportTypeChange} isLimitedView={isLimitedView} />
-      <main className="flex-1 ml-64 bg-slate-50 min-h-screen">
+      <main className="flex-1 ml-64 bg-slate-900 min-h-screen">
         <Header title={getHeaderTitle()} />
-        <div className="p-8 flex-1 overflow-y-auto">
 
-          {renderSubTypeSelectors()}
+        {/* ── Halaman Voucher Extractor (full-width, standalone) ── */}
+        {reportType === 'VOUCHER_EXTRACTOR' ? (
+          <VoucherExtractor />
+        ) : (
+          <div className="p-8 flex-1 overflow-y-auto">
+            {renderSubTypeSelectors()}
 
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 space-y-6">
-              {renderFileUpload()}
-              <InstructionCard reportType={reportType} fifoSubType={fifoSubType} />
-              {/* Manual Input Removed as requested by User */}
-            </div>
-            <div className="lg:col-span-2">
-
-              <div className="bg-white rounded-xl shadow-lg p-6 min-h-[400px] flex flex-col border border-slate-100">
-                {isLoading || isProcessing ? (
-                  <div className="flex-grow flex items-center justify-center">
-                    <LoadingSpinner />
-                  </div>
-                ) : error ? (
-                  <div className="flex-grow flex items-center justify-center text-center">
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
-                      <strong className="font-bold">{t('app.errorLabel')}: </strong>
-                      <span className="block sm:inline">{error}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-1 space-y-6">
+                {renderFileUpload()}
+                <InstructionCard reportType={reportType} fifoSubType={fifoSubType} />
+                {/* Manual Input Removed as requested by User */}
+              </div>
+              <div className="lg:col-span-2">
+                <div className="bg-white rounded-xl shadow-lg p-6 min-h-[400px] flex flex-col border border-slate-100">
+                  {isLoading || isProcessing ? (
+                    <div className="flex-grow flex items-center justify-center">
+                      <LoadingSpinner />
                     </div>
-                  </div>
-                ) : reportData.length > 0 ? (
-                  <ReportTable orders={reportData} fileName={fileName} reportType={reportType} fifoSubType={fifoSubType} summaryData={amSummaryData} fifoSummaries={fifoSummaries} underperformedData={underperformedData} resumeData={resumeData} staffFifoDateRange={staffFifoDateRange} isLimitedView={isLimitedView} />
-                ) : (
-                  <div className="flex-grow flex flex-col items-center justify-center text-center text-slate-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2-2z" />
-                    </svg>
-                    <p className="font-semibold">{t('app.noReport.title')}</p>
-                    <p className="text-sm">{t('app.noReport.description')}</p>
-                  </div>
-                )}
+                  ) : error ? (
+                    <div className="flex-grow flex items-center justify-center text-center">
+                      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+                        <strong className="font-bold">{t('app.errorLabel')}: </strong>
+                        <span className="block sm:inline">{error}</span>
+                      </div>
+                    </div>
+                  ) : reportData.length > 0 ? (
+                    <ReportTable orders={reportData} fileName={fileName} reportType={reportType} fifoSubType={fifoSubType} summaryData={amSummaryData} fifoSummaries={fifoSummaries} underperformedData={underperformedData} resumeData={resumeData} staffFifoDateRange={staffFifoDateRange} isLimitedView={isLimitedView} />
+                  ) : (
+                    <div className="flex-grow flex flex-col items-center justify-center text-center text-slate-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2-2z" />
+                      </svg>
+                      <p className="font-semibold">{t('app.noReport.title')}</p>
+                      <p className="text-sm">{t('app.noReport.description')}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );

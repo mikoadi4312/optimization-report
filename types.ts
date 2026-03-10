@@ -223,7 +223,20 @@ export type ReportData = SaleOrder | TransferGoodsData | DepositToolsData | Fifo
 
 // ... (kode lama) ...
 
-export type ReportType = 'SO_NOT_EXPORT' | 'TRANSFER_GOODS' | 'DEPOSIT_TOOLS' | 'FIFO' | 'REVENUE_STAFF' | 'INCENTIVE_STAFF';
+export type ReportType = 'SO_NOT_EXPORT' | 'TRANSFER_GOODS' | 'DEPOSIT_TOOLS' | 'FIFO' | 'REVENUE_STAFF' | 'INCENTIVE_STAFF' | 'VOUCHER_EXTRACTOR';
+
+// --- Voucher Extractor ---
+export interface VoucherRow {
+  receiptCode: string;
+  appliedValue: string;  // simpan sebagai string untuk preserve format "5,000,000"
+  expiredDay: string;    // contoh: "02/05/2026"
+}
+
+export interface ExtractionProgress {
+  currentPage: number;
+  totalPages: number;
+  percentage: number;
+}
 
 declare global {
   interface Window {
