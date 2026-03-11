@@ -1,33 +1,39 @@
 {
     "meta": {
         "schema_version": "1.1.0",
-        "awf_version": "3.3.0",
-        "updated_at": "2026-02-12T16:40:00+07:00"
+        "awf_version": "4.0.0",
+        "updated_at": "2026-03-11T09:12:00+07:00"
     },
     "project": {
         "name": "Optimization Report",
-        "type": "Web Application",
+        "type": "Web Application (Vite + React + Electron)",
         "status": "Development",
-        "description": "Aplikasi pelaporan optimalisasi untuk manajemen toko, mencakup laporan FIFO, transfer barang, deposit manual, dan kinerja staf."
+        "description": "Aplikasi pelaporan optimalisasi untuk manajemen toko. Mencakup laporan FIFO, transfer barang, deposit manual, kinerja staf, insentif staf, dan fitur Voucher Extractor (ekstrak Receipt Code / Applied Value / Expired Day dari PDF ke Excel)."
     },
     "tech_stack": {
         "frontend": {
             "framework": "React (Vite)",
             "language": "TypeScript",
             "styling": "Tailwind CSS",
-            "icons": "Lucide React",
+            "icons": "Lucide React / Heroicons SVG inline",
             "charts": "Recharts"
         },
         "backend": {
             "runtime": "Cloudflare Pages Functions",
             "database": "Cloudflare D1 (SQLite)",
             "orm": "Drizzle ORM (migrasi manual)",
-            "file_processing": "ExcelJS"
+            "file_processing": "ExcelJS + xlsx-js-style"
         },
         "deployment": {
             "platform": "Cloudflare Pages",
+            "production_url": "https://optimizationreportnew.pages.dev",
             "build_command": "npm run build",
             "output_dir": "dist"
+        },
+        "pdf_processing": {
+            "library": "pdfjs-dist",
+            "version": "latest",
+            "purpose": "Membaca teks dari PDF gift voucher per halaman, tanpa OCR (hanya text-based PDF)"
         }
     },
     "database_schema": {
@@ -81,7 +87,7 @@
                         "default": "CURRENT_TIMESTAMP"
                     }
                 ],
-                "relationships_explained": "Tabel tunggal untuk menyimpan riwayat transaksi deposit manual yang diunggah dari Excel."
+                "relationships_explained": "Tabel tunggal menyimpan riwayat transaksi deposit manual dari Excel."
             }
         ]
     },
@@ -102,40 +108,83 @@
     ],
     "features": [
         {
-            "name": "Deposit Manual Report",
+            "name": "SO Not Export",
             "status": "Implemented",
-            "description": "Upload file Excel Deposit & AM, validasi data, deteksi duplikat, dan simpan ke Cloudflare D1."
+            "menu_key": "SO_NOT_EXPORT",
+            "description": "Laporan SO yang belum di-export."
         },
         {
-            "name": "Staff FIFO Mistake",
+            "name": "FIFO Report",
             "status": "Implemented",
+            "menu_key": "FIFO",
             "description": "Laporan kesalahan FIFO staf berdasarkan pencocokan IMEI."
         },
         {
             "name": "Transfer Goods Report",
             "status": "Implemented",
+            "menu_key": "TRANSFER_GOODS",
             "description": "Laporan keterlambatan transfer barang antar toko."
+        },
+        {
+            "name": "Deposit Manual Report",
+            "status": "Implemented",
+            "menu_key": "DEPOSIT_TOOLS",
+            "description": "Upload Excel Deposit & AM, validasi, deteksi duplikat, simpan ke Cloudflare D1."
         },
         {
             "name": "Revenue Staff Report",
             "status": "Implemented",
+            "menu_key": "REVENUE_STAFF",
             "description": "Laporan performa pendapatan staf bulanan."
+        },
+        {
+            "name": "Incentive Staff Report",
+            "status": "Implemented",
+            "menu_key": "INCENTIVE_STAFF",
+            "description": "Laporan insentif staf."
+        },
+        {
+            "name": "Voucher Extractor",
+            "status": "Implemented",
+            "menu_key": "VOUCHER_EXTRACTOR",
+            "description": "Upload 1 atau banyak file PDF Gift Voucher sekaligus, ekstrak 3 kolom: Receipt Code, Applied Value, Expired Day. Output: file Excel dengan header biru tua (#1E3A5F), teks putih, border tabel. Mendukung ribuan halaman per file.",
+            "key_files": [
+                "services/reports/voucherExtractor.ts",
+                "services/reports/voucherExcelExport.ts",
+                "components/reports/VoucherExtractor.tsx"
+            ],
+            "library": "pdfjs-dist",
+            "regex_patterns": {
+                "receipt_code": "/Receipt\\s+Code\\s*:\\s*([A-Z0-9]+(?:\\s+[A-Z0-9]+(?![a-z]))*)/  (TANPA flag /i)",
+                "applied_value": "/Applied\\s+Value\\s*:\\s*([\\d,]+)/i",
+                "expired_day": "/Expired\\s+Day\\s*:\\s*(\\d{1,2}\\/\\d{1,2}\\/\\d{4})/i"
+            },
+            "receipt_code_notes": "Pakai negative lookahead (?![a-z]) untuk mencegah 'Seri' atau 'number' ikut tertangkap. Spasi dalam kode dihapus via .replace(/\\s+/g,'') — contoh: 'XJAV 9PPV' → 'XJAV9PPV'."
         }
     ],
     "knowledge_items": {
         "patterns": [
-            "File Upload & Processing di Client-side (React + ExcelJS)",
+            "File Upload multi-file & Processing di Client-side (React + pdfjs-dist + xlsx-js-style)",
             "Serverless Backend dengan Cloudflare Pages Functions",
-            "Database D1 dengan akses via binding 'DB'"
+            "Database D1 dengan akses via binding 'DB'",
+            "PDF text extraction (text-based only, bukan OCR) dengan pdfjs-dist + progress callback",
+            "VOUCHER_EXTRACTOR sebagai halaman full-width standalone — di-bypass dari layout grid normal di App.tsx"
         ],
         "gotchas": [
-            "Local Wrangler D1 bersifat ephemeral (hilang saat restart) kecuali dipersisting, tapi tabel perlu dibuat ulang jika db file terhapus.",
-            "Wrangler local development environment issue: `db.exec()` bisa menyebabkan error `undefined reading 'duration'`, gunakan `db.prepare().run()` sebagai gantinya."
+            "pdfjs-dist: selalu set GlobalWorkerOptions.workerSrc ke URL pdfjs-dist/build/pdf.worker.mjs via import.meta.url sebelum parse PDF.",
+            "PDF text extraction: teks antar item digabung pakai spasi (' '.join) bukan langsung concat, untuk mencegah kata terpotong.",
+            "Receipt Code regex HARUS tanpa flag /i — jika pakai /i, kata 'Seri' dan 'number' (huruf kecil) ikut tertangkap karena dianggap kapital.",
+            "Receipt Code regex pakai negative lookahead (?![a-z]) untuk berhenti sebelum huruf kapital tunggal yang diikuti huruf kecil (contoh: 'S' dari 'Seri').",
+            "xlsx-js-style diimport dengan @ts-ignore karena tidak ada type declarations.",
+            "Local Wrangler D1: gunakan db.prepare().run() bukan db.exec() untuk hindari error 'undefined reading duration'."
         ],
         "conventions": [
-            "Komponen UI reusable di folder `components/`",
-            "Logika bisnis laporan di folder `services/reports/`",
-            "API handlers di folder `functions/api/`"
+            "Komponen UI halaman di folder components/reports/",
+            "Logika bisnis & ekstraksi di folder services/reports/",
+            "API handlers di folder functions/api/",
+            "Types/interfaces terpusat di types.ts di root",
+            "Menu sidebar terdaftar di components/Sidebar.tsx (array menuItems)",
+            "Route halaman dikontrol di App.tsx via conditional render berdasarkan reportType"
         ]
     }
 }
