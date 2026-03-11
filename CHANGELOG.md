@@ -1,5 +1,25 @@
 # Changelog
 
+## [2026-03-10]
+### Added
+- **Voucher Extractor** (Fitur baru — menu ke-7 di sidebar):
+    - Upload 1 atau banyak file PDF Gift Voucher sekaligus (drag & drop / klik)
+    - Ekstrak otomatis 3 kolom: `Receipt Code`, `Applied Value`, `Expired Day`
+    - Progress bar realtime per halaman, lintas semua file
+    - Tabel preview hasil (tampilkan max 200 baris, export semua)
+    - Export ke Excel: header biru tua (`#1E3A5F`), teks putih, border tabel, timestamp
+    - Support ribuan halaman PDF per file, diproses sequential
+    - Library: `pdfjs-dist`
+    - Files: `services/reports/voucherExtractor.ts`, `services/reports/voucherExcelExport.ts`, `components/reports/VoucherExtractor.tsx`
+
+### Fixed
+- **Voucher Extractor — Receipt Code terpotong** (`XJAV` saja, harusnya `XJAV9PPV`):
+    - Regex diperbarui agar tangkap multi-grup alfanumerik yang dipisah spasi, lalu strip spasi
+- **Voucher Extractor — Kata "Seri number" ikut masuk ke Receipt Code** (`NT6997AASerinumber`):
+    - Hapus flag `/i` dari regex sehingga `[A-Z0-9]` hanya cocok huruf kapital asli
+- **Voucher Extractor — Huruf 'S' dari "Seri" masih ikut** (`U39NMQMAS` harusnya `U39NMQMA`):
+    - Tambah negative lookahead `(?![a-z])` untuk batalkan grup jika huruf berikutnya lowercase
+
 ## [2026-02-11]
 ### Added
 - **Cloudflare D1 Integration**: 

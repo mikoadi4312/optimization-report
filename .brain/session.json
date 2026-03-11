@@ -1,16 +1,19 @@
 {
-    "updated_at": "2026-02-12T16:40:00+07:00",
+    "updated_at": "2026-03-11T09:12:00+07:00",
     "working_on": {
-        "feature": "Deposit Tools Integration",
-        "task": "Fix DB table error and UI sync",
+        "feature": "Voucher Extractor",
+        "task": "Bug fix regex Receipt Code selesai — fitur siap pakai",
         "status": "completed",
         "files": [
-            "functions/api/deposit.ts",
-            "App.tsx",
-            "services/api.ts"
+            "services/reports/voucherExtractor.ts",
+            "services/reports/voucherExcelExport.ts",
+            "components/reports/VoucherExtractor.tsx",
+            "types.ts",
+            "components/Sidebar.tsx",
+            "App.tsx"
         ],
         "blockers": [],
-        "notes": "Upload sukses, data muncul, dan tersimpan ke DB."
+        "notes": "Semua 5 phase selesai. Fitur support multi-file PDF upload + 3 kolom output (Receipt Code, Applied Value, Expired Day). Regex sudah fix untuk kasus kode dengan spasi (XJAV 9PPV) dan kasus 'Serinumber' / 'U39NMQMAS' ikut tertangkap."
     },
     "pending_tasks": [],
     "production_url": "https://optimizationreportnew.pages.dev",
@@ -18,42 +21,93 @@
     "production_checked_at": "2026-03-05T16:38:00+07:00",
     "recent_changes": [
         {
-            "timestamp": "2026-02-12T16:00:00+07:00",
-            "type": "fix",
-            "description": "Fixed 'no such table' error by using `db.prepare().run()` instead of `db.exec()`.",
+            "timestamp": "2026-03-10T11:03:00+07:00",
+            "type": "feature",
+            "description": "Membuat fitur Voucher Extractor (5 phase): install pdfjs-dist, service PDF parser, service Excel export, komponen UI, integrasi ke Sidebar & App.",
             "files": [
-                "functions/api/deposit.ts"
+                "services/reports/voucherExtractor.ts",
+                "services/reports/voucherExcelExport.ts",
+                "components/reports/VoucherExtractor.tsx",
+                "types.ts",
+                "components/Sidebar.tsx",
+                "App.tsx",
+                "package.json"
             ]
         },
         {
-            "timestamp": "2026-02-12T16:10:00+07:00",
-            "type": "fix",
-            "description": "Fixed UI blank screen after upload by using `useRef` to block immediate DB re-fetch.",
+            "timestamp": "2026-03-10T11:18:00+07:00",
+            "type": "feature",
+            "description": "Upgrade: tambah kolom Expired Day (regex + Excel + UI tabel), support multi-file PDF upload sekaligus (extractVouchersFromMultiplePDFs), progress bar global lintas file.",
             "files": [
-                "App.tsx"
+                "services/reports/voucherExtractor.ts",
+                "services/reports/voucherExcelExport.ts",
+                "components/reports/VoucherExtractor.tsx",
+                "types.ts"
+            ]
+        },
+        {
+            "timestamp": "2026-03-10T11:29:00+07:00",
+            "type": "fix",
+            "description": "Bug fix: Receipt Code 'XJAV 9PPV' hanya tertangkap 'XJAV'. Fix: regex diubah ke ([A-Z0-9]+(?:\\s+[A-Z0-9]+(?![a-z]))*) agar menangkap multi-grup, lalu .replace(/\\s+/g,'') untuk strip spasi.",
+            "files": [
+                "services/reports/voucherExtractor.ts"
+            ]
+        },
+        {
+            "timestamp": "2026-03-10T11:32:00+07:00",
+            "type": "fix",
+            "description": "Bug fix: 'Seri number' ikut masuk ke Receipt Code → hapus flag /i dari RECEIPT_CODE_REGEX agar [A-Z0-9] hanya cocok huruf KAPITAL asli.",
+            "files": [
+                "services/reports/voucherExtractor.ts"
+            ]
+        },
+        {
+            "timestamp": "2026-03-10T11:37:00+07:00",
+            "type": "fix",
+            "description": "Bug fix: 'U39NMQMA' tertangkap jadi 'U39NMQMAS' karena 'S' dari 'Seri' (kapital) ikut. Fix: tambah negative lookahead (?![a-z]) agar grup berhenti sebelum huruf kapital yang diikuti huruf kecil.",
+            "files": [
+                "services/reports/voucherExtractor.ts"
             ]
         }
     ],
     "errors_encountered": [
         {
             "error": "D1_ERROR: no such table: deposit_transactions",
-            "solution": "Replaced `db.exec()` with separate `db.prepare().run()` statements for table creation.",
+            "solution": "Replaced db.exec() with separate db.prepare().run() statements.",
             "resolved": true
         },
         {
-            "error": "UI shows 'No Report' after successful upload",
-            "solution": "Added `blockDbLoadRef` to prevent race condition between local state update and DB fetch.",
+            "error": "Receipt Code tertangkap 'XJAV' saja padahal seharusnya 'XJAV9PPV'",
+            "solution": "Ganti regex dari [A-Z0-9]+ menjadi [A-Z0-9]+(?:\\s+[A-Z0-9]+(?![a-z]))* dan tambah .replace(/\\s+/g,'').",
+            "resolved": true
+        },
+        {
+            "error": "Receipt Code keluarkan 'NT6997AASerinumber' — kata 'Seri number' ikut tertangkap",
+            "solution": "Hapus flag /i dari RECEIPT_CODE_REGEX. Dengan ini [A-Z0-9] hanya cocok huruf kapital asli, bukan huruf kecil.",
+            "resolved": true
+        },
+        {
+            "error": "Receipt Code 'U39NMQMA' tertangkap jadi 'U39NMQMAS' — 'S' dari 'Seri' masih ikut",
+            "solution": "Tambah negative lookahead (?![a-z]) setelah setiap grup tambahan. Jika 'S' diikuti 'e' (kecil), grup dibatalkan.",
             "resolved": true
         }
     ],
     "decisions_made": [
         {
-            "decision": "Use sequential insert for uploads",
-            "reason": "Ensure stability and avoid batch size limits or 'SQLITE_ERROR' on large payloads."
+            "decision": "pdfjs-dist untuk membaca PDF (bukan OCR)",
+            "reason": "PDF Gift Voucher adalah text-based, pdfjs-dist akurat dan kompatibel dengan Vite + Electron."
         },
         {
-            "decision": "Auto-create table on API request",
-            "reason": "Simplifies local development without needing manual migration run every time."
+            "decision": "Multi-file diproses sequential bukan paralel",
+            "reason": "Menghindari kehabisan memori saat file besar (ribuan halaman). Sequential lebih aman dan predictable."
+        },
+        {
+            "decision": "VOUCHER_EXTRACTOR ditampilkan sebagai halaman full-width (bypass layout grid)",
+            "reason": "Fitur ini tidak perlu FileUpload card + InstructionCard dari layout standar. Lebih bersih sebagai standalone page."
+        },
+        {
+            "decision": "Receipt Code regex TANPA flag /i + negative lookahead (?![a-z])",
+            "reason": "Mencegah kata-kata seperti 'Seri number' yang diawali huruf kapital masuk ke dalam tangkapan Receipt Code."
         }
     ]
 }
