@@ -2,7 +2,7 @@
     "meta": {
         "schema_version": "1.1.0",
         "awf_version": "4.0.0",
-        "updated_at": "2026-03-11T09:12:00+07:00"
+        "updated_at": "2026-03-12T16:44:00+07:00"
     },
     "project": {
         "name": "Optimization Report",
@@ -27,6 +27,7 @@
         "deployment": {
             "platform": "Cloudflare Pages",
             "production_url": "https://optimizationreportnew.pages.dev",
+            "account_id": "8bc091ea804feac1efd1726cacb76de7",
             "build_command": "npm run build",
             "output_dir": "dist"
         },
@@ -176,7 +177,9 @@
             "Receipt Code regex HARUS tanpa flag /i — jika pakai /i, kata 'Seri' dan 'number' (huruf kecil) ikut tertangkap karena dianggap kapital.",
             "Receipt Code regex pakai negative lookahead (?![a-z]) untuk berhenti sebelum huruf kapital tunggal yang diikuti huruf kecil (contoh: 'S' dari 'Seri').",
             "xlsx-js-style diimport dengan @ts-ignore karena tidak ada type declarations.",
-            "Local Wrangler D1: gunakan db.prepare().run() bukan db.exec() untuk hindari error 'undefined reading duration'."
+            "Local Wrangler D1: gunakan db.prepare().run() bukan db.exec() untuk hindari error 'undefined reading duration'.",
+            "Cloudflare Pages D1 Binding: wrangler.toml WAJIB punya 'account_id' agar binding D1 bisa ditemukan saat auto-deploy dari GitHub. Tanpa account_id, error: 'D1 binding DB references database X which was not found'. account_id proyek ini: 8bc091ea804feac1efd1726cacb76de7.",
+            "Cloudflare Pages Bindings via wrangler.toml: tombol edit binding di dashboard akan di-disable (read-only) dengan pesan 'Bindings for this project are being managed through wrangler.toml'. Semua perubahan binding harus lewat file wrangler.toml, lalu push ke git."
         ],
         "conventions": [
             "Komponen UI halaman di folder components/reports/",

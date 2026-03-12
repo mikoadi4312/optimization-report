@@ -1,24 +1,33 @@
 {
-    "updated_at": "2026-03-11T09:12:00+07:00",
+    "updated_at": "2026-03-12T16:44:00+07:00",
     "working_on": {
-        "feature": "Voucher Extractor",
-        "task": "Bug fix regex Receipt Code selesai — fitur siap pakai",
-        "status": "completed",
+        "feature": "Cloudflare Pages Deployment Fix",
+        "task": "Fix build error setelah tambah account_id ke wrangler.toml — build sekarang gagal di 'Building application' (error belum diketahui)",
+        "status": "in_progress",
         "files": [
-            "services/reports/voucherExtractor.ts",
-            "services/reports/voucherExcelExport.ts",
-            "components/reports/VoucherExtractor.tsx",
-            "types.ts",
-            "components/Sidebar.tsx",
-            "App.tsx"
+            "wrangler.toml"
         ],
-        "blockers": [],
-        "notes": "Semua 5 phase selesai. Fitur support multi-file PDF upload + 3 kolom output (Receipt Code, Applied Value, Expired Day). Regex sudah fix untuk kasus kode dengan spasi (XJAV 9PPV) dan kasus 'Serinumber' / 'U39NMQMAS' ikut tertangkap."
+        "blockers": [
+            "Build Cloudflare Pages masih gagal di step 'Building application' (8s) setelah ditambah account_id. Error detail belum diketahui — perlu lihat build log lengkap."
+        ],
+        "notes": "Commit 72de208 sudah push ke GitHub. Production masih running dari commit 57b2e48 (24 hari lalu). Perlu lihat build log dari commit 72de208 untuk debug error baru."
     },
-    "pending_tasks": [],
+    "pending_tasks": [
+        {
+            "task": "Lihat build log lengkap dari commit 72de208 di Cloudflare Pages — cari error di step 'Building application'",
+            "priority": "high",
+            "notes": "Commit sudah ada di git (72de208). Buka dash.cloudflare.com → optimizationreportnew → Deployments → View details commit 72de208 → Download log."
+        },
+        {
+            "task": "Fix Cloudflare Pages deployment agar production bisa update ke versi terbaru (Voucher Extractor)",
+            "priority": "high",
+            "notes": "Production masih di commit 57b2e48 (24 hari lalu). Semua fitur terbaru belum live."
+        }
+    ],
     "production_url": "https://optimizationreportnew.pages.dev",
-    "production_status": "verified_working",
-    "production_checked_at": "2026-03-05T16:38:00+07:00",
+    "production_status": "outdated",
+    "production_checked_at": "2026-03-11T15:55:00+07:00",
+    "production_notes": "Production masih di commit lama 57b2e48 (build 24 hari lalu). Deployment baru gagal terus sejak ~6 hari lalu. Fitur Voucher Extractor belum live.",
     "recent_changes": [
         {
             "timestamp": "2026-03-10T11:03:00+07:00",
@@ -56,7 +65,7 @@
         {
             "timestamp": "2026-03-10T11:32:00+07:00",
             "type": "fix",
-            "description": "Bug fix: 'Seri number' ikut masuk ke Receipt Code → hapus flag /i dari RECEIPT_CODE_REGEX agar [A-Z0-9] hanya cocok huruf KAPITAL asli.",
+            "description": "Bug fix: 'Seri number' ikut masuk ke Receipt Code → hapus flag /i dari RECEIPT_CODE_REGEX.",
             "files": [
                 "services/reports/voucherExtractor.ts"
             ]
@@ -64,10 +73,19 @@
         {
             "timestamp": "2026-03-10T11:37:00+07:00",
             "type": "fix",
-            "description": "Bug fix: 'U39NMQMA' tertangkap jadi 'U39NMQMAS' karena 'S' dari 'Seri' (kapital) ikut. Fix: tambah negative lookahead (?![a-z]) agar grup berhenti sebelum huruf kapital yang diikuti huruf kecil.",
+            "description": "Bug fix: 'U39NMQMA' tertangkap jadi 'U39NMQMAS' — tambah negative lookahead (?![a-z]).",
             "files": [
                 "services/reports/voucherExtractor.ts"
             ]
+        },
+        {
+            "timestamp": "2026-03-11T15:43:00+07:00",
+            "type": "fix",
+            "description": "Tambah account_id ke wrangler.toml untuk fix error 'D1 binding DB references database X which was not found' di Cloudflare Pages auto-deploy. account_id: 8bc091ea804feac1efd1726cacb76de7.",
+            "files": [
+                "wrangler.toml"
+            ],
+            "commit": "72de208"
         }
     ],
     "errors_encountered": [
@@ -82,14 +100,10 @@
             "resolved": true
         },
         {
-            "error": "Receipt Code keluarkan 'NT6997AASerinumber' — kata 'Seri number' ikut tertangkap",
-            "solution": "Hapus flag /i dari RECEIPT_CODE_REGEX. Dengan ini [A-Z0-9] hanya cocok huruf kapital asli, bukan huruf kecil.",
-            "resolved": true
-        },
-        {
-            "error": "Receipt Code 'U39NMQMA' tertangkap jadi 'U39NMQMAS' — 'S' dari 'Seri' masih ikut",
-            "solution": "Tambah negative lookahead (?![a-z]) setelah setiap grup tambahan. Jika 'S' diikuti 'e' (kecil), grup dibatalkan.",
-            "resolved": true
+            "error": "Cloudflare Pages: 'D1 binding DB references database 9940b49c-966f-450d-8e23-18a692840d40 which was not found'",
+            "solution": "Tambah 'account_id = 8bc091ea804feac1efd1726cacb76de7' ke wrangler.toml. Tanpa account_id, Cloudflare Pages tidak tahu di akun mana mencari D1 database.",
+            "resolved": false,
+            "notes": "Sudah push fix (commit 72de208) tapi build sekarang gagal di step lain. Perlu debug lebih lanjut."
         }
     ],
     "decisions_made": [
@@ -108,6 +122,10 @@
         {
             "decision": "Receipt Code regex TANPA flag /i + negative lookahead (?![a-z])",
             "reason": "Mencegah kata-kata seperti 'Seri number' yang diawali huruf kapital masuk ke dalam tangkapan Receipt Code."
+        },
+        {
+            "decision": "Tambah account_id ke wrangler.toml",
+            "reason": "Cloudflare Pages auto-deploy dari GitHub perlu account_id di wrangler.toml agar bisa menemukan D1 database binding."
         }
     ]
 }
